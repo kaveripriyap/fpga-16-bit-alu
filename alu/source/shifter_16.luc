@@ -1,8 +1,8 @@
-module shifter16 (
+module shifter_16 (
     input alufn[6],  // OPCODE
     input x[16],     // X
     input y[16],     // Y
-    output out[16]   // Output 
+    output shifter_out[16]   // Output 
   ) {
 
   always {
@@ -11,18 +11,18 @@ module shifter16 (
       
       // For shift left
       b00: 
-        out = x << y;
+        shifter_out = x << y;
         
       // For shift right
       b01: 
-        out = x >> y;
+        shifter_out = x >> y;
         
       // For shift right arithmetic  
       b11: 
-        out = $signed(x) >>> $signed(y);
+        shifter_out = $signed(x) >>> $signed(y);
       
       default:
-        out = x;
+        shifter_out = x;
     }
   }
 }
