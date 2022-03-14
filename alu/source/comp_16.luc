@@ -1,0 +1,34 @@
+module comp_16 (
+    input alufn[6],
+    input x[16],
+    input y[16],
+    input z,
+    input v,
+    input n,
+    
+    output comp_out[16]
+  ) {
+  
+  sig comp;
+  
+  always{
+  
+    case(alufn[2:1]){
+      
+         b01:
+         comp = x == y; // equal to
+          
+         b10:
+         comp = x < y;  // less than
+         
+         b11:
+         comp = x <= y; // less than equal
+         
+         default:
+         comp = b0;
+      }
+    
+    comp_out[0] = comp;
+    comp_out[15:1] = 15b0; // Other 15 bits will be initialized to zero.
+  }
+}

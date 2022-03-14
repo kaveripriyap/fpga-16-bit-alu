@@ -45,10 +45,10 @@ module alu (
         out = adder.sum;        
         
       2b11:  
-        out = comp.comp;       
+        out = comp.comp_out;       
         
       2b01:  
-        out = bool.bool;       
+        out = bool.bool_out;       
         
       2b10:  
         out = shift.shifter_out;  
