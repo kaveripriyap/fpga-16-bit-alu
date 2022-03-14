@@ -1,10 +1,41 @@
 module bool_16 (
-    input clk,  // clock
-    input rst,  // reset
-    output out
+    input x[16],
+    input y[16],
+    input alufn[4],
+    
+    output bool_out[16]
   ) {
 
   always {
-    out = 0;
+  
+    case(alufn[3:0]){
+    
+      // Boolean Operations:
+      
+      b1000: 
+        bool_out = x & y;     // AND
+        
+      b1110: 
+        bool_out = x | y;     // OR
+        
+      b0110: 
+        bool_out = x ^ y;     // XOR
+        
+      b1010: 
+        bool_out = x;         // "A"
+        
+      b0001: 
+        bool_out = ~ (x & y); // NAND
+        
+      b1111:  
+        bool_out = ~ (x | y); // NOR
+        
+      b0111: 
+        bool_out = ~ (x ^ y); // XNOR
+        
+      default: 
+        bool_out = 16b0;
+      
+      }
   }
 }

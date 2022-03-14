@@ -1,35 +1,35 @@
 module adder_16 (
-    input x[16],  
-    input y[16],
     input alufn[6],
+    input x[16],
+    input y[16],
     
-    output sum[16],
     output z,
+    output v,
     output n,
-    output v
-    
+    output adder_out[16]
   ) {
-  
-  sig temp[16];                     // We declare an intermediary signal temp, this stores our final sum/subtraction.
+  sig temp[16];
   
   always {
-    temp = 0;                       // Temp is always preset to 0 in order to give a default value.
- 
-    if (alufn[0] == 0) {            // If alufn is 0, it adds. 
+    case (alufn[3:2]){
+      4b0000: temp = x + y;                  
+      4b0001: temp = x - y;                 
       
-      temp = x + y;
-         
-    } else if (alufn[0] == 1) {     // If alufn is 1, it subtracts.
-      
-      temp = x - y;
-    
+      // ADDITIONAL FUNCTIONS:
+      4b0010: temp = (x * y);               
+      // MODULO
+      4b0111: 
+        if (y != 0) // avoid dividing by zero
+          temp = x - ((x / y) * y); 
+        else
+          temp = x; 
+      default: temp = 0;
     }
     
-    sum = temp;                     // We give the value of temp to the final sum.
-    
+    z = temp == 0;
+    v = (x[15] & (y[15] ^ alufn[0]) & ~temp[15] ) | ( ~x[15] & ~(y[15] ^ alufn[0]) & temp[15]);
     n = temp[15];
-    v = (x[15] & (y[15] ^ alufn[0]) & !temp[15]) | (!x[15] & !(y[15] ^ alufn[0]) & temp[15]); 
-    z = ~|temp;   
     
+    adder_out = temp;
   }
 }

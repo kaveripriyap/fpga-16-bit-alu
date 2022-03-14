@@ -1,12 +1,11 @@
 module comp_16 (
     input alufn[6],
-    input x[16],
-    input y[16],
     input z,
     input v,
     input n,
     
     output comp_out[16]
+    
   ) {
   
   sig comp;
@@ -16,16 +15,16 @@ module comp_16 (
     case(alufn[2:1]){
       
          b01:
-         comp = x == y; // equal to
+           comp = z; // equal to
           
          b10:
-         comp = x < y;  // less than
+           comp = n ^ v;  // less than
          
          b11:
-         comp = x <= y; // less than equal
+           comp = z | (n ^ v); // less than equal
          
          default:
-         comp = b0;
+           comp = b0;
       }
     
     comp_out[0] = comp;

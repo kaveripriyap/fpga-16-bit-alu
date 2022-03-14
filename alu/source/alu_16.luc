@@ -16,9 +16,7 @@ module alu (
     shifter_16 shift;
   
   always {   
-   
-    // out = 0;
-    
+       
     adder.x = x;
     adder.y = y;
     adder.alufn = alufn;
@@ -42,7 +40,7 @@ module alu (
     case(alufn[5:4]) {
     
       2b00:  
-        out = adder.sum;        
+        out = adder.adder_out;        
         
       2b11:  
         out = comp.comp_out;       
@@ -53,7 +51,8 @@ module alu (
       2b10:  
         out = shift.shifter_out;  
 
-      default: out = 0;  
+      default: out = 0; 
+       
     }   
   }
 }
