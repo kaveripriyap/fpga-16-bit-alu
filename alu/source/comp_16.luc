@@ -1,33 +1,33 @@
 module comp_16 (
-    input alufn[6],
     input z,
     input v,
     input n,
-    
-    output comp_out[16]
-    
+    input compAlufn[2], //2 bit input determining which comparison to use
+    /*
+    This module follows SW Lab 3 closely
+    */
+    output compOut[16]
   ) {
+
+  sig temp;
   
-  sig comp;
-  
-  always{
-  
-    case(alufn[2:1]){
-      
-         b01:
-           comp = z; // equal to
-          
-         b10:
-           comp = n ^ v;  // less than
-         
-         b11:
-           comp = z | (n ^ v); // less than equal
-         
-         default:
-           comp = b0;
-      }
+  always {
+    case(compAlufn){
+
+      b01:                        // equal to (a = b)
+        temp = z;
+        
+      b10:                        // less than (a < b)
+        temp = n ^ v;
+        
+      b11:                        // less than equal to (a <= b)
+        temp = (n ^ v) | z;
+        
+      default:                
+        temp = 0;
+    }
     
-    comp_out[0] = comp;
-    comp_out[15:1] = 15b0; // Other 15 bits will be initialized to zero.
-  }
+    compOut[15:1] = 15b0;        
+    compOut[0] = temp;
+    
 }

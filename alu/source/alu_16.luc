@@ -1,58 +1,61 @@
-module alu (
-    input alufn[6],
+module alu_16 (
     input x[16],
     input y[16],
+    input alufn[6],    
 
     output out[16],
     output z,
     output v,
     output n
-
   ) {
-
-    adder_16 adder;
-    bool_16 bool;
-    comp_16 comp;
-    shifter_16 shift;
   
-  always {   
-       
-    adder.x = x;
-    adder.y = y;
-    adder.alufn = alufn;
-    z = adder.z;
-    v = adder.v;
-    n = adder.n;
+  arith_16 arith; 
+  arith_16 arithForComp; 
+  bool_16 bool; 
+  shift_16 shift; 
+  comp_16 comp;
+  
+  always {
+    arith.x = x;
+    arith.y = y;
+    arith.arithAlufn = alufn[1:0]; 
+    z = arith.z; 
+    v = arith.v;
+    n = arith.n;
     
-    bool.x = x;                    
+    arithForComp.x = x;
+    arithForComp.y = y;
+    arithForComp.arithAlufn = b01; 
+    
+    comp.z = arithForComp.z;
+    comp.v = arithForComp.v;
+    comp.n = arithForComp.n;
+    comp.compAlufn = alufn[2:1];
+    
+    bool.x = x;
     bool.y = y;
-    bool.alufn = alufn;
+    bool.boolAlufn = alufn[3:0];
     
-    comp.alufn = alufn;
-    comp.z = adder.z;
-    comp.v = adder.v;
-    comp.n = adder.n;
-    
-    shift.x = x;                    
+    shift.x = x;
     shift.y = y;
-    shift.alufn = alufn;
+    shift.shiftAlufn = alufn[1:0];
     
-    case(alufn[5:4]) {
-    
-      2b00:  
-        out = adder.adder_out;        
+    case(alufn[5:4]){
+      
+      b00:                             // for adder
+        out = arith.arithOut;
         
-      2b11:  
-        out = comp.comp_out;       
+      b01:                             // for bool
+        out = bool.boolOut;
         
-      2b01:  
-        out = bool.bool_out;       
+      b10:                             // for shifter
+        out = shift.shiftOut;
         
-      2b10:  
-        out = shift.shifter_out;  
+      b11:                             // for comparator
+        out = comp.compOut;
 
-      default: out = 0; 
-       
-    }   
+      default:                         // hopefully this never happens
+        out = 16b0;  
+    }
   }
 }
