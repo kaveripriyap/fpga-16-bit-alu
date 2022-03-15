@@ -8,7 +8,7 @@ Programmed a 16 bit ALU on Alchitry IDE in Lucid HDL and tested the code on the 
   * Right click "Components" and select "Add Components...".
   * Under Miscellaneous, add components "Counter", "Reset Conditioner", and "Decoder" to the project.
 
-### I/O Configuration
+#### I/O Configuration
 
 * IO Buttons:
 
@@ -32,7 +32,7 @@ Programmed a 16 bit ALU on Alchitry IDE in Lucid HDL and tested the code on the 
 * Seven Seg Display
   * In the MANUAL mode, [ - Z V N ] is displayed on the seven seg display.
 
-### Core Modules
+#### Core Modules
 
 * ALU Module (alu_16.luc)
 * Arithmetic Module (arith_16.luc)
@@ -40,9 +40,9 @@ Programmed a 16 bit ALU on Alchitry IDE in Lucid HDL and tested the code on the 
 * Comparator Module (comp_16.luc)
 * Shifter Module (shift_16.luc)
 
-### ALU Testing
-
-``fsm states = {INITIAL, 
+#### ALU Testing
+```
+fsm states = {INITIAL, 
               MANUAL,
               // AUTO
               // ARITHMETIC TEST CASES
@@ -59,7 +59,8 @@ Programmed a 16 bit ALU on Alchitry IDE in Lucid HDL and tested the code on the 
               SL1, SL2, SL3, SL4,
               SR1, SR2, SR3, SR4,
               SRA1, SRA2, SRA3, SRA4
-              };```
+              };
+```
 
 ### Manual Testing
 
