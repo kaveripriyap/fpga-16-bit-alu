@@ -3721,20 +3721,18 @@ module au_top (
          io_led[15:0] = regOut.q;      // Show what is stored in store_temp.q - can be either A[15:0] or B[15:0] depending on inner stateCase 
           
           
-        // If triggered back to MANUAL STATE      
-        if(io_dip[23]){                   //checking switch for manual state
+        if(io_dip[23]){                   
           states.d = states.MANUAL;}
             
-        // In charge of counters & inner change of state      
-        counter.d = counter.q+1;                    //add 1 to clock every time code loops
+        counter.d = counter.q+1;                    
         if(io_button[3] | counter.q[TIMER]==1){
-          stateCase.d = stateCase.q+1;         //if clock timer reaches TIMER or if button input is detected
+          stateCase.d = stateCase.q+1;         
           counter.d = 0;
         }
 
-	 //SRA
+	    //SRA
       states.SRA4:
-	      //shift F00F right arithmetically by 15
+	      // shift F00F right arithmetically by 15
         regAlufn.d = 6b100011;
         regX.d = 16b1111000000001111; 
         regY.d = 16b0000000000001111; 

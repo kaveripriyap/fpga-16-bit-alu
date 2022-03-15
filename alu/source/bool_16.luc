@@ -32,7 +32,7 @@ module bool_16 (
         temp = ~ (x & y);
       
       b1010:                    // XNOR - bitwise
-        temp = x ~^ y;
+        temp = ~ (x & y);
       
       b1011:                    // NOT X
         temp = ~ x;

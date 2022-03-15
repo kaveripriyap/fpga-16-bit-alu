@@ -18,12 +18,12 @@ module arith_16 (
           
       b00:                                    // ADD
         temp = $signed(x) + $signed(y);
-        xb = b;
+        xb = y;
         v = ((x[15] & y[15] & (~temp[15])) | ((~x[15]) & (~y[15]) & temp[15]));
         
       b01:                                    // SUBTRACT
         temp = $signed(x) - $signed(y);
-        xb = 0 - b;   
+        xb = 0 - y;   
         v = ((x[15] & xb[15] & (~temp[15])) | ((~x[15]) & (~xb[15]) & temp[15]));
         
       b10:                                    // MULTIPLY
