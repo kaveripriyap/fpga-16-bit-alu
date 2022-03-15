@@ -2,10 +2,8 @@ module comp_16 (
     input z,
     input v,
     input n,
-    input compAlufn[2], //2 bit input determining which comparison to use
-    /*
-    This module follows SW Lab 3 closely
-    */
+    input compAlufn[2], 
+
     output compOut[16]
   ) {
 
