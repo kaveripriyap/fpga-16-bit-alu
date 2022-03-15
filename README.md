@@ -14,9 +14,9 @@ Programmed a 16 bit ALU on Alchitry IDE in Lucid HDL and tested the code on the 
 
   * UP: Press to write the 16 bit input X in io_switch[15:0]. 
   * CENTER: Press to write the 16 bit input Y in io_switch[15:0].
-  * DOWN: Press to write the ALUFN input and to subsequently compute the operation between X and Y according to the ALUFN code in the **MANUAL** mode.
+  * DOWN: Press to write the ALUFN input and to subsequently compute the operation between X and Y according to the ALUFN code in the MANUAL mode.
   * LEFT: Press to reset the ALU.
-  * RIGHT: Press to switch to **AUTO** mode.
+  * RIGHT: Press to switch to AUTO mode.
 
 * DIP Switches:
   
@@ -26,8 +26,8 @@ Programmed a 16 bit ALU on Alchitry IDE in Lucid HDL and tested the code on the 
 
 * IO LEDs:
 
-  * Row 2: [7:5] are assigned for Z, V, N outputs respectively for AUTO & MANUAL modes
-  * The 16 bit outputs from ALU in **MANUAL** mode are displayed in io_led[15:0].
+  * The 16 bit outputs from ALU in MANUAL mode are displayed in io_led[15:0].
+  * [21:16] display 000ZVN as an output for AUTO mode.
 
 * Seven Seg Display
   * In the MANUAL mode, [ - Z V N ] is displayed on the seven seg display.
