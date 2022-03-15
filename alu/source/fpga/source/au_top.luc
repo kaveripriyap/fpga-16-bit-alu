@@ -1,0 +1,964 @@
+module au_top (
+    input clk,              
+    input rst_n,            
+    output led [8],         
+    input usb_rx,           
+    output usb_tx,          
+    output io_led [24],     
+    output io_seg [8],      
+    output io_sel [4],      
+    input io_button [5],    
+    input io_dip [24]       
+  ) {
+  
+  sig rst;                  
+  
+  .clk(clk) {
+    reset_conditioner reset_cond;
+    
+    .rst(rst){
+      dff regX[16];
+      dff regY[16];
+      dff regAlufn[6];
+      dff regOut[16];
+      dff regZ;
+      dff regV;
+      dff regN;
+      dff regRightAnswer[16];
+      dff register_status[8];
+      dff counter[29];
+      dff stateCase[4](#INIT(0));
+      
+      // TEST CASES
+      fsm states = {INITIAL, 
+                    MANUAL,
+                    // AUTO
+                    // ARITHMETIC TEST CASES
+                    ADDER1, ADDER2,
+                    // COMPARATOR TEST CASES
+                    COMPEQ, COMPLT,
+                    // BOOLEAN TEST CASES
+                    BOOLAND, BOOLXNOR, 
+                    // SHIFTER TEST CASES
+                    SHIFTLEFT, SHIFTRIGHTA, 
+                    SHOWB, NOTA, 
+                    MULTIPLY};
+
+      multi_seven_seg seg;  
+    }
+  }
+  
+  alu_16 alutop; 
+  const TIMER = 28;
+  
+  sig x[16]; 
+  sig y[16];
+  sig alu[16];
+  sig alufn[6];
+  
+  always {
+    reset_cond.in = ~ rst_n;          
+    rst = reset_cond.out;             
+    usb_tx = usb_rx;                  
+    led = 8h00;                       
+    io_led = 24h00;                   
+    io_seg = 8hff;                    
+    io_sel = 4hf;                     
+    seg.values = {8hf, 8hf, 8hf, 8hf};
+    
+    x = 16b0; 
+    y = 16b0;
+    io_seg = ~seg.seg;
+    io_sel = ~seg.sel;
+    
+    alufn = io_dip[21:16];
+    alutop.alufn = alufn; 
+    io_led[15:0] = x;
+    alutop.x = x;
+    alutop.y = y;
+    alu = alutop.out; 
+         
+    // INIT STATE
+    case(states.q){
+      states.INITIAL:
+        seg.values = {8hf, 8hf, 8hf, 8hf};
+        
+        if(io_button[4] == 1){ // RIGHT BUTTON - AUTO
+          states.d = states.ADDER1;
+        }
+        
+        if(io_dip[23]){ // LEFT DIP SWITCH ON - MANUAL
+          seg.values = {8h15, 8h0, 8h0, 8h0};
+          states.d = states.MANUAL;
+        }
+    // MANUAL
+      states.MANUAL:
+        io_led[23] = b1; // MANUAL LED SHOW
+        
+        if(io_button[0]){ // TOP BUTTON PRESS - io_dip[15:0] WRITE TO X
+          x[15:0] = io_dip[15:0];
+          regX.d = x;
+          regOut.d = x;
+        }
+        
+        if(io_button[1]){ // CENTER BUTTON PRESS - io_dip[15:0] WRITE TO Y
+          y[15:0] = io_dip[15:0];
+          regY.d = y;
+          regOut.d = y;
+        }
+        
+        if(io_button[2]){ // DOWN BUTTON PRESS - DO COMPUTATION BASED ON X, Y, ALUFN (io_dip[21:16])
+          alufn = io_dip[21:16];
+          regAlufn.d = alufn;
+          alutop.alufn = regAlufn.q;
+          alutop.x = regX.q;
+          alutop.y = regY.q;
+          alutop.alufn = regAlufn.q;
+          alu = alutop.out;
+          
+          regZ.d = alutop.z;
+          regV.d = alutop.v;
+          regN.d = alutop.n;
+          
+          regOut.d = alu[15:0];
+        }
+        
+        if(io_button[3]){ // LEFT BUTTON PRESS - RESET
+          regX.d = 16b0;
+          regY.d = 16b0;
+          regAlufn.d = 6b0;
+          regOut.d = 16b0;
+          regZ.d = b0;
+          regV.d = b0;
+          regN.d = b0;
+        }
+        
+        io_led[15:0] = regOut.q; 
+        
+        // SEVEN SEGMENT [- Z V N]
+        if (regZ.q == b1) { // Z TRUE
+          seg.values[2] = h1;
+        } else {
+          seg.values[2] = h0;
+        }
+        
+        if (regV.q == b1) { // V TRUE
+          seg.values[1] = h1;
+        } else {
+          seg.values[1] = h0;
+        }
+        
+        if (regN.q == b1) { // N TRUE
+          seg.values[0] = h1;
+        } else {
+          seg.values[0] = h0;
+        }
+        
+        io_led[21:16] = regAlufn.q; // ALUFN
+        
+        if(!io_dip[23]){ 
+          regX.d = 16b0;
+          regY.d = 16b0;
+          regAlufn.d = 6b0;
+          regOut.d = 16b0;
+          regZ.d = b0;
+          regV.d = b0;
+          regN.d = b0;
+          states.d = states.INITIAL;
+        }
+      // END MANUAL
+        
+      // START AUTO     
+      states.ADDER1:
+        // X = 5, Y = 3, EXPECTED OUTPUT = 8
+        regAlufn.d = 6b0;
+        regX.d = 16b0000000000000101; 
+        regY.d = 16b0000000000000011; 
+        regRightAnswer.d = 16b0000000000001000; 
+        
+        alutop.alufn = regAlufn.q;
+        alutop.x = regX.q;
+        alutop.y = regY.q;
+        alu = alutop.out;
+        
+        regZ.d = alutop.z;
+        regV.d = alutop.v;
+        regN.d = alutop.n;
+        
+        if (stateCase.q == 0){
+          seg.values = {8h1, 8hf, 8hf, 8hf};   // "1"
+          register_status.d = c{2b0, regAlufn.q};
+          regOut.d = 16b0;
+        }
+        
+        if (stateCase.q == 1){
+          seg.values = {8he, 8hf, 8hf, 8hf};   //  "A"                    
+          register_status.d = 6b0;             // clear io_led[23:16]
+          regOut.d = regX.q;                   // show value of A in leds
+        }
+          
+        if (stateCase.q == 2){
+          seg.values = {8h8, 8hf, 8hf, 8hf};    // io_seg: "B"
+          regOut.d = regY.q;                    // show value of B in leds
+        }
+          
+        if (stateCase.q == 3){
+          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
+          regOut.d = alu[15:0];         // show the ALU RESULT
+          
+          if (regRightAnswer.q == alu[15:0]){  // Compare expected correct result & the alu result
+            seg.values = {8hd, 8he, 8h5, 8h5};   // "PASS"
+          } else {
+            seg.values = {8hd, 8he, 8h5, 8h5};   // "FAIL"
+          }
+        }
+        
+        if (stateCase.q == 4){                   // Transition to next operation case
+          regX.d = 16b0;                         // Clear all stored value
+          regY.d = 16b0;
+          regAlufn.d = 6b0;
+          register_status.d = 8b0;
+          regOut.d = 16b0;
+          regZ.d = b0;
+          regV.d = b0;
+          regN.d = b0;
+          stateCase.d = 0;
+          states.d = states.ADDER2; 
+          }
+        
+         io_led[23:16] = register_status.q;      // Show what is stored in store_status.q - can be ALUFN[5:0] or 000ZVN
+         io_led[15:0] = regOut.q;       // Show what is stored in store_temp.q - can be either A[15:0] or B[15:0] depending on inner stateCase 
+          
+        if(io_dip[23]){                          
+          states.d = states.MANUAL;}
+            
+        // In charge of counters & inner change of state      
+        counter.d = counter.q + 1;               //add 1 to clock every time code loops
+        if(io_button[3] | counter.q[TIMER] == 1){
+          stateCase.d = stateCase.q + 1;         //if clock timer reaches TIMER or if button input is detected
+          counter.d = 0;
+        }
+        
+      states.ADDER2:
+        regAlufn.d = 6b0;
+        regX.d = 16b0111111111111111; 
+        regY.d = 16b0111111111111111; 
+        regRightAnswer.d = 16b1111111111111110;  
+        
+        alutop.alufn = regAlufn.q;
+        alutop.x = regX.q;
+        alutop.y = regY.q;
+        alu = alutop.out;
+        
+        regZ.d = alutop.z;
+        regV.d = alutop.v;
+        regN.d = alutop.n;
+        
+        if(stateCase.q == 0){
+          seg.values = {8h2, 8hf, 8hf, 8hf}; // "2"
+          register_status.d = c{2b0, regAlufn.q};
+          regOut.d = 16b0;
+        }
+        
+        if (stateCase.q == 1){
+          seg.values = {8he, 8hf, 8hf, 8hf};  //"A"                      
+          register_status.d = 6b0;            // clear io_led[23:16]
+          regOut.d = regX.q;   // show value of A in leds
+        }
+          
+        if (stateCase.q == 2){
+          seg.values = {8h8, 8hf, 8hf, 8hf};  // io_seg: "B"
+          regOut.d = regY.q;   // show value of B in leds
+        }
+          
+        if (stateCase.q == 3){
+          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
+          regOut.d = alu[15:0];      // show the ALU RESULT
+          
+          if (regRightAnswer.q == alu[15:0]){ // Compare expected correct result & the alu result
+            seg.values = {8hd, 8he, 8h5, 8h5};// "PASS"
+          } else {
+            seg.values = {8ha, 8he, 8hb, 8hc};// "FAIL"
+          }
+        }
+        
+        if (stateCase.q == 4){                // Transition to next operation case
+          regX.d = 16b0;                      // Clear all stored value
+          regY.d = 16b0;
+          regAlufn.d = 6b0;
+          register_status.d = 8b0;
+          regOut.d = 16b0;
+          regZ.d = b0;
+          regV.d = b0;
+          regN.d = b0;
+          stateCase.d = 0;
+          states.d = states.COMPEQ; 
+          }
+        
+         io_led[23:16] = register_status.q;   // Show what is stored in store_status.q - can be ALUFN[5:0] or 000ZVN
+         io_led[15:0] = regOut.q;    // Show what is stored in store_temp.q - can be either A[15:0] or B[15:0] depending on inner stateCase 
+          
+          
+        // If triggered back to MANUAL STATE      
+        if(io_dip[23]){                   //checking switch for manual state
+          states.d = states.MANUAL;}
+            
+        // In charge of counters & inner change of state      
+        counter.d = counter.q+1;                //add 1 to clock every time code loops
+        if(io_button[3] | counter.q[TIMER]==1){
+          stateCase.d = stateCase.q + 1;        //if clock timer reaches TIMER or if button input is detected
+          counter.d = 0;
+        }
+      
+      //COMPARE EQUAL
+      states.COMPEQ:
+        regAlufn.d = 6b110011;
+        regX.d = 16b0000000010000000; //a = 128
+        regY.d = 16b0000000010000000; //b = 128
+        regRightAnswer.d = 16b0000000000000001; //expected out: TRUE, they are equal
+        
+        alutop.alufn = regAlufn.q;
+        alutop.x = regX.q;
+        alutop.y = regY.q;
+        alu = alutop.out;
+        
+        regZ.d = alutop.z;
+        regV.d = alutop.v;
+        regN.d = alutop.n;
+        
+        if(stateCase.q == 0){
+          seg.values = {8h3, 8hf, 8hf, 8hf}; // "3"
+          register_status.d = c{2b0, regAlufn.q};
+          regOut.d = 16b0;
+        }
+        
+        if (stateCase.q == 1){
+          seg.values = {8he, 8hf, 8hf, 8hf};  //"A"                      
+          register_status.d = 6b0;            // clear io_led[23:16]
+          regOut.d = regX.q;         // show value of A in leds
+        }
+          
+        if (stateCase.q == 2){
+          seg.values = {8h8, 8hf, 8hf, 8hf};  // io_seg: "B"
+          regOut.d = regY.q;         // show value of B in leds
+        }
+          
+        if (stateCase.q == 3){
+          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
+          regOut.d = alu[15:0];         // show the ALU RESULT
+          
+          if (regRightAnswer.q == alu[15:0]){  // Compare expected correct result & the alu result
+            seg.values = {8hd, 8he, 8h5, 8h5};   // "PASS"
+          } else {
+            seg.values = {8ha, 8he, 8hb, 8hc} ;  // "FAIL"
+          }
+        }
+        
+        if (stateCase.q == 4){                  // Transition to next operation case
+          regX.d = 16b0;                   // Clear all stored value
+          regY.d = 16b0;
+          regAlufn.d = 6b0;
+          register_status.d = 8b0;
+          regOut.d = 16b0;
+          regZ.d = b0;
+          regV.d = b0;
+          regN.d = b0;
+          stateCase.d = 0;
+          states.d = states.COMPLT; 
+          }
+        
+         io_led[23:16] = register_status.q;   // Show what is stored in store_status.q - can be ALUFN[5:0] or 000ZVN
+         io_led[15:0] = regOut.q;      // Show what is stored in store_temp.q - can be either A[15:0] or B[15:0] depending on inner stateCase 
+          
+          
+        // If triggered back to MANUAL STATE      
+        if(io_dip[23]){                   //checking switch for manual state
+          states.d = states.MANUAL;}
+            
+        // In charge of counters & inner change of state      
+        counter.d = counter.q+1;                    //add 1 to clock every time code loops
+        if(io_button[3] | counter.q[TIMER]==1){
+          stateCase.d = stateCase.q+1;         //if clock timer reaches TIMER or if button input is detected
+          counter.d = 0;
+        }
+        
+        //COMPARE LESS THAN
+      states.COMPLT:
+        regAlufn.d = 6b111101;
+        regX.d = 16b0000000000000001; //a = 1
+        regY.d = 16b0000000000001010; //b = 10
+        regRightAnswer.d = 16b0000000000000001; //expected out = TRUE, a < b
+        
+        alutop.alufn = regAlufn.q;
+        alutop.x = regX.q;
+        alutop.y = regY.q;
+        alu = alutop.out;
+        
+        regZ.d = alutop.z;
+        regV.d = alutop.v;
+        regN.d = alutop.n;
+        
+        if(stateCase.q == 0){
+          seg.values = {8h4, 8hf, 8hf, 8hf}; // "4"
+          register_status.d = c{2b0, regAlufn.q};
+          regOut.d = 16b0;
+        }
+        
+        if (stateCase.q == 1){
+          seg.values = {8he, 8hf, 8hf, 8hf};  //"A" 
+          register_status.d = 6b0;                                         // clear io_led[23:16]
+          regOut.d = regX.q;                                    // show value of A in leds
+        }
+          
+        if (stateCase.q == 2){
+          seg.values = {8h8, 8hf, 8hf, 8hf};                         // io_seg: "   B"
+          regOut.d = regY.q;                                     // show value of B in leds
+        }
+          
+        if (stateCase.q == 3){
+          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
+          regOut.d = alu[15:0];                                   // show the ALU RESULT
+          
+          if (regRightAnswer.q == alu[15:0]){                             // Compare expected correct result & the alu result
+            seg.values = {8hd, 8he, 8h5, 8h5};                         // "PASS"
+          } else {
+            seg.values = {8ha, 8he, 8hb, 8hc} ;                         // "FAIL"
+          }
+        }
+        
+        if (stateCase.q == 4){                                         // Transition to next operation case
+          regX.d = 16b0;                                           // Clear all stored value
+          regY.d = 16b0;
+          regAlufn.d = 6b0;
+          register_status.d = 8b0;
+          regOut.d = 16b0;
+          regZ.d = b0;
+          regV.d = b0;
+          regN.d = b0;
+          stateCase.d = 0;
+          states.d = states.BOOLAND; 
+          }
+        
+         io_led[23:16] = register_status.q;   // Show what is stored in store_status.q - can be ALUFN[5:0] or 000ZVN
+         io_led[15:0] = regOut.q;      // Show what is stored in store_temp.q - can be either A[15:0] or B[15:0] depending on inner stateCase 
+          
+          
+        // If triggered back to MANUAL STATE      
+        if(io_dip[23]){                   //checking switch for manual state
+          states.d = states.MANUAL;}
+            
+        // In charge of counters & inner change of state      
+        counter.d = counter.q+1;                    //add 1 to clock every time code loops
+        if(io_button[3] | counter.q[TIMER]==1){
+          stateCase.d = stateCase.q+1;         //if clock timer reaches TIMER or if button input is detected
+          counter.d = 0;
+        }      
+        
+        //BITWISE AND
+        states.BOOLAND:
+        regAlufn.d = 6b010001;
+        regX.d = 16b1111111100000000; //a
+        regY.d = 16b0000111100001111; //b = 10
+        regRightAnswer.d = 16b0000111100000000; //expected out 
+        
+        alutop.alufn = regAlufn.q;
+        alutop.x = regX.q;
+        alutop.y = regY.q;
+        alu = alutop.out;
+        
+        regZ.d = alutop.z;
+        regV.d = alutop.v;
+        regN.d = alutop.n;
+        
+       
+        if(stateCase.q == 0){
+          seg.values = {8h5, 8hf, 8hf, 8hf}; // "5"
+          register_status.d = c{2b0, regAlufn.q};
+          regOut.d = 16b0;
+        }
+        
+        if (stateCase.q == 1){
+          seg.values = {8he, 8hf, 8hf, 8hf};  //"A" 
+          register_status.d = 6b0;                                         // clear io_led[23:16]
+          regOut.d = regX.q;                                    // show value of A in leds
+        }
+          
+        if (stateCase.q == 2){
+          seg.values = {8h8, 8hf, 8hf, 8hf};                         // io_seg: "   B"
+          regOut.d = regY.q;                                     // show value of B in leds
+        }
+          
+        if (stateCase.q == 3){
+          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
+          regOut.d = alu[15:0];                                   // show the ALU RESULT
+          
+          if (regRightAnswer.q == alu[15:0]){                             // Compare expected correct result & the alu result
+            seg.values = {8hd, 8he, 8h5, 8h5};                         // "PASS"
+          } else {
+            seg.values = {8ha, 8he, 8hb, 8hc} ;                         // "FAIL"
+          }
+        }
+        
+        if (stateCase.q == 4){                                         // Transition to next operation case
+          regX.d = 16b0;                                           // Clear all stored value
+          regY.d = 16b0;
+          regAlufn.d = 6b0;
+          register_status.d = 8b0;
+          regOut.d = 16b0;
+          regZ.d = b0;
+          regV.d = b0;
+          regN.d = b0;
+          stateCase.d = 0;
+          states.d = states.BOOLXNOR; 
+          }
+        
+         io_led[23:16] = register_status.q;   // Show what is stored in register_status.q - can be ALUFN[5:0] or 000ZVN
+         io_led[15:0] = regOut.q;      // Show what is stored in register_temp.q - can be either A[15:0] or B[15:0] depending on inner stateCase 
+          
+          
+        // If triggered back to MANUAL STATE      
+        if(io_dip[23]){                   //checking switch for manual state
+          states.d = states.MANUAL;}
+            
+        // In charge of counters & inner change of state      
+        counter.d = counter.q+1;                    //add 1 to clock every time code loops
+        if(io_button[3] | counter.q[TIMER]==1){
+          stateCase.d = stateCase.q+1;         //if clock timer reaches TIMER or if button input is detected
+          counter.d = 0;
+        }
+     
+     //XNOR
+     states.BOOLXNOR:
+        regAlufn.d = 6b011010;
+        regX.d = 16b1110010101001011; //a
+        regY.d = 16b1010010101001010; //b
+        regRightAnswer.d = 16b1011111111111110; //expected out 
+        
+        alutop.alufn = regAlufn.q;
+        alutop.x = regX.q;
+        alutop.y = regY.q;
+        alu = alutop.out;
+        
+        regZ.d = alutop.z;
+        regV.d = alutop.v;
+        regN.d = alutop.n;
+        
+        if(stateCase.q == 0){
+          seg.values = {8h6, 8hf, 8hf, 8hf}; // "6"
+          register_status.d = c{2b0, regAlufn.q};
+          regOut.d = 16b0;
+        }
+        
+        if (stateCase.q == 1){
+          seg.values = {8he, 8hf, 8hf, 8hf};  //"A"                      
+          register_status.d = 6b0;                                         // clear io_led[23:16]
+          regOut.d = regX.q;                                    // show value of A in leds
+        }
+          
+        if (stateCase.q == 2){
+          seg.values = {8h8, 8hf, 8hf, 8hf};                         // io_seg: "   B"
+          regOut.d = regY.q;                                     // show value of B in leds
+        }
+          
+        if (stateCase.q == 3){
+          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
+          regOut.d = alu[15:0];                                   // show the ALU RESULT
+          
+          if (regRightAnswer.q == alu[15:0]){                             // Compare expected correct result & the alu result
+            seg.values = {8hd, 8he, 8h5, 8h5};                         // "PASS"
+          } else {
+            seg.values = {8ha, 8he, 8hb, 8hc} ;                         // "FAIL"
+          }
+        }
+        
+        if (stateCase.q == 4){                                         // Transition to next operation case
+          regX.d = 16b0;                                           // Clear all stored value
+          regY.d = 16b0;
+          regAlufn.d = 6b0;
+          register_status.d = 8b0;
+          regOut.d = 16b0;
+          regZ.d = b0;
+          regV.d = b0;
+          regN.d = b0;
+          stateCase.d = 0;
+          states.d = states.SHIFTLEFT; 
+          }
+        
+         io_led[23:16] = register_status.q;   // Show what is stored in store_status.q - can be ALUFN[5:0] or 000ZVN
+         io_led[15:0] = regOut.q;      // Show what is stored in store_temp.q - can be either A[15:0] or B[15:0] depending on inner stateCase 
+          
+          
+        // If triggered back to MANUAL STATE      
+        if(io_dip[23]){                   //checking switch for manual state
+          states.d = states.MANUAL;}
+            
+        // In charge of counters & inner change of state      
+        counter.d = counter.q+1;                    //add 1 to clock every time code loops
+        if(io_button[3] | counter.q[TIMER]==1){
+          stateCase.d = stateCase.q+1;         //if clock timer reaches TIMER or if button input is detected
+          counter.d = 0;
+        }   
+           
+     //SHIFT LEFT UNSIGNED 
+     states.SHIFTLEFT:
+        regAlufn.d = 6b100000;
+        regX.d = 16b1111111100000000; //a
+        regY.d = 16b0011000000000011; //b : demonstrate only bottom 4 bits matter by throwing in extra 1's 
+        regRightAnswer.d = 16b1111100000000000; //expected out 
+        
+        alutop.alufn = regAlufn.q;
+        alutop.x = regX.q;
+        alutop.y = regY.q;
+        alu = alutop.out;
+        
+        regZ.d = alutop.z;
+        regV.d = alutop.v;
+        regN.d = alutop.n;
+        
+       
+        if(stateCase.q == 0){
+          seg.values = {8h7, 8hf, 8hf, 8hf}; // "7"
+          register_status.d = c{2b0, regAlufn.q};
+          regOut.d = 16b0;
+        }
+        
+        if (stateCase.q == 1){
+          seg.values = {8he, 8hf, 8hf, 8hf};  //"A" 
+          register_status.d = 6b0;                                         // clear io_led[23:16]
+          regOut.d = regX.q;                                    // show value of A in leds
+        }
+          
+        if (stateCase.q == 2){
+          seg.values = {8h8, 8hf, 8hf, 8hf};                         // io_seg: "   B"
+          regOut.d = regY.q;                                     // show value of B in leds
+        }
+          
+        if (stateCase.q == 3){
+          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
+          regOut.d = alu[15:0];                                   // show the ALU RESULT
+          
+          if (regRightAnswer.q == alu[15:0]){                             // Compare expected correct result & the alu result
+            seg.values = {8hd, 8he, 8h5, 8h5};                         // "PASS"
+          } else {
+            seg.values = {8ha, 8he, 8hb, 8hc} ;                         // "FAIL"
+          }
+        }
+        
+        if (stateCase.q == 4){                                         // Transition to next operation case
+          regX.d = 16b0;                                           // Clear all stored value
+          regY.d = 16b0;
+          regAlufn.d = 6b0;
+          register_status.d = 8b0;
+          regOut.d = 16b0;
+          regZ.d = b0;
+          regV.d = b0;
+          regN.d = b0;
+          stateCase.d = 0;
+          states.d = states.SHIFTRIGHTA; 
+          }
+        
+         io_led[23:16] = register_status.q;   // Show what is stored in register_status.q - can be ALUFN[5:0] or 000ZVN
+         io_led[15:0] = regOut.q;      // Show what is stored in register_temp.q - can be either A[15:0] or B[15:0] depending on inner stateCase 
+          
+          
+        // If triggered back to MANUAL STATE      
+        if(io_dip[23]){                   //checking switch for manual state
+          states.d = states.MANUAL;}
+            
+        // In charge of counters & inner change of state      
+        counter.d = counter.q+1;                    //add 1 to clock every time code loops
+        if(io_button[3] | counter.q[TIMER]==1){
+          stateCase.d = stateCase.q+1;         //if clock timer reaches TIMER or if button input is detected
+          counter.d = 0;
+        }
+      //SRA
+      states.SHIFTRIGHTA:
+        regAlufn.d = 6b100011;
+        regX.d = 16b1010011111111111; //a
+        regY.d = 16b0000000000000001; //b
+        regRightAnswer.d = 16b1101001111111111; //expected out 
+        
+        alutop.alufn = regAlufn.q;
+        alutop.x = regX.q;
+        alutop.y = regY.q;
+        alu = alutop.out;
+        
+        regZ.d = alutop.z;
+        regV.d = alutop.v;
+        regN.d = alutop.n;
+        
+        if(stateCase.q == 0){
+          seg.values = {8h8, 8hf, 8hf, 8hf}; // "8"
+          register_status.d = c{2b0, regAlufn.q};
+          regOut.d = 16b0;
+        }
+        
+        if (stateCase.q == 1){
+          seg.values = {8he, 8hf, 8hf, 8hf};  //"A"                      
+          register_status.d = 6b0;                                         // clear io_led[23:16]
+          regOut.d = regX.q;                                    // show value of A in leds
+        }
+          
+        if (stateCase.q == 2){
+          seg.values = {8h8, 8hf, 8hf, 8hf};                         // io_seg: "   B"
+          regOut.d = regY.q;                                     // show value of B in leds
+        }
+          
+        if (stateCase.q == 3){
+          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
+          regOut.d = alu[15:0];                                   // show the ALU RESULT
+          
+          if (regRightAnswer.q == alu[15:0]){                             // Compare expected correct result & the alu result
+            seg.values = {8hd, 8he, 8h5, 8h5};                         // "PASS"
+          } else {
+            seg.values = {8ha, 8he, 8hb, 8hc} ;                         // "FAIL"
+          }
+        }
+        
+        if (stateCase.q == 4){                                         // Transition to next operation case
+          regX.d = 16b0;                                           // Clear all stored value
+          regY.d = 16b0;
+          regAlufn.d = 6b0;
+          register_status.d = 8b0;
+          regOut.d = 16b0;
+          regZ.d = b0;
+          regV.d = b0;
+          regN.d = b0;
+          stateCase.d = 0;
+          states.d = states.SHOWB; 
+          }
+        
+         io_led[23:16] = register_status.q;   // Show what is stored in store_status.q - can be ALUFN[5:0] or 000ZVN
+         io_led[15:0] = regOut.q;      // Show what is stored in store_temp.q - can be either A[15:0] or B[15:0] depending on inner stateCase 
+          
+          
+        // If triggered back to MANUAL STATE      
+        if(io_dip[23]){                   //checking switch for manual state
+          states.d = states.MANUAL;}
+            
+        // In charge of counters & inner change of state      
+        counter.d = counter.q+1;                    //add 1 to clock every time code loops
+        if(io_button[3] | counter.q[TIMER]==1){
+          stateCase.d = stateCase.q+1;         //if clock timer reaches TIMER or if button input is detected
+          counter.d = 0;
+        }
+      
+        
+      //SHOW B
+      states.SHOWB:
+        regAlufn.d = 6b010100;
+        regX.d = 16b1111111111111111; //a
+        regY.d = 16b0000000000101010; //b
+        regRightAnswer.d = 16b0000000000101010; //expected out 
+        
+        alutop.alufn = regAlufn.q;
+        alutop.x = regX.q;
+        alutop.y = regY.q;
+        alu = alutop.out;
+        
+        regZ.d = alutop.z;
+        regV.d = alutop.v;
+        regN.d = alutop.n;
+        
+        if(stateCase.q == 0){
+          seg.values = {8h9, 8hf, 8hf, 8hf}; // "9"
+          register_status.d = c{2b0, regAlufn.q};
+          regOut.d = 16b0;
+        }
+        
+        if (stateCase.q == 1){
+          seg.values = {8he, 8hf, 8hf, 8hf};  //"A"                      
+          register_status.d = 6b0;                                         // clear io_led[23:16]
+          regOut.d = regX.q;                                    // show value of A in leds
+        }
+          
+        if (stateCase.q == 2){
+          seg.values = {8h8, 8hf, 8hf, 8hf};                         // io_seg: "B"
+          regOut.d = regY.q;                                     // show value of B in leds
+        }
+          
+        if (stateCase.q == 3){
+          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
+          regOut.d = alu[15:0];                                   // show the ALU RESULT
+          
+          if (regRightAnswer.q == alu[15:0]){                             // Compare expected correct result & the alu result
+            seg.values = {8hd, 8he, 8h5, 8h5};                         // "PASS"
+          } else {
+            seg.values = {8ha, 8he, 8hb, 8hc} ;                         // "FAIL"
+          }
+        }
+        
+        if (stateCase.q == 4){                                         // Transition to next operation case
+          regX.d = 16b0;                                           // Clear all stored value
+          regY.d = 16b0;
+          regAlufn.d = 6b0;
+          register_status.d = 8b0;
+          regOut.d = 16b0;
+          regZ.d = b0;
+          regV.d = b0;
+          regN.d = b0;
+          stateCase.d = 0;
+          states.d = states.NOTA; 
+          }
+        
+         io_led[23:16] = register_status.q;   // Show what is stored in store_status.q - can be ALUFN[5:0] or 000ZVN
+         io_led[15:0] = regOut.q;      // Show what is stored in store_temp.q - can be either A[15:0] or B[15:0] depending on inner stateCase 
+          
+          
+        // If triggered back to MANUAL STATE      
+        if(io_dip[23]){                   //checking switch for manual state
+          states.d = states.MANUAL;}
+            
+        // In charge of counters & inner change of state      
+        counter.d = counter.q+1;                    //add 1 to clock every time code loops
+        if(io_button[3] | counter.q[TIMER]==1){
+          stateCase.d = stateCase.q+1;         //if clock timer reaches TIMER or if button input is detected
+          counter.d = 0;
+        }
+        
+      //NOTA: negates and returns the value of A       
+      states.NOTA:
+        regAlufn.d = 6b011011;
+        regX.d = 16b1111111100000000; //a
+        regY.d = 16b0000000000101010; //b
+        regRightAnswer.d = 16b0000000011111111; //expected out 
+        
+        alutop.alufn = regAlufn.q;
+        alutop.x = regX.q;
+        alutop.y = regY.q;
+        alu = alutop.out;
+        
+        regZ.d = alutop.z;
+        regV.d = alutop.v;
+        regN.d = alutop.n;
+        
+        if(stateCase.q == 0){
+          seg.values = {8h1, 8h0, 8hf, 8hf}; // "10"
+          register_status.d = c{2b0, regAlufn.q};
+          regOut.d = 16b0;
+        }
+        
+        if (stateCase.q == 1){
+          seg.values = {8he, 8hf, 8hf, 8hf};  //"A"                      
+          register_status.d = 6b0;                                         // clear io_led[23:16]
+          regOut.d = regX.q;                                    // show value of A in leds
+        }
+          
+        if (stateCase.q == 2){
+          seg.values = {8h8, 8hf, 8hf, 8hf};                         // io_seg: "   B"
+          regOut.d = regY.q;                                     // show value of B in leds
+        }
+          
+        if (stateCase.q == 3){
+          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
+          regOut.d = alu[15:0];                                   // show the ALU RESULT
+          
+          if (regRightAnswer.q == alu[15:0]){                             // Compare expected correct result & the alu result
+            seg.values = {8hd, 8he, 8h5, 8h5};                         // "PASS"
+          } else {
+            seg.values = {8ha, 8he, 8hb, 8hc} ;                         // "FAIL"
+          }
+        }
+        
+        if (stateCase.q == 4){                                         // Transition to next operation case
+          regX.d = 16b0;                                           // Clear all stored value
+          regY.d = 16b0;
+          regAlufn.d = 6b0;
+          register_status.d = 8b0;
+          regOut.d = 16b0;
+          regZ.d = b0;
+          regV.d = b0;
+          regN.d = b0;
+          stateCase.d = 0;
+          states.d = states.MULTIPLY; 
+          }
+        
+         io_led[23:16] = register_status.q;   // Show what is stored in store_status.q - can be ALUFN[5:0] or 000ZVN
+         io_led[15:0] = regOut.q;      // Show what is stored in store_temp.q - can be either A[15:0] or B[15:0] depending on inner stateCase 
+          
+          
+        // If triggered back to MANUAL STATE      
+        if(io_dip[23]){                   //checking switch for manual state
+          states.d = states.MANUAL;}
+            
+        // In charge of counters & inner change of state      
+        counter.d = counter.q+1;                    //add 1 to clock every time code loops
+        if(io_button[3] | counter.q[TIMER]==1){
+          stateCase.d = stateCase.q+1;         //if clock timer reaches TIMER or if button input is detected
+          counter.d = 0;
+        }
+        
+        //MULTIPLY
+      states.MULTIPLY:
+        // X = 4, Y = 4, 
+        regAlufn.d = 6b000010;
+        regX.d = 16b0000000000000100; //a = 4
+        regY.d = 16b0000000000000100; //b = 4
+        regRightAnswer.d = 16b0000000000010000; //expected out = 16
+        
+        alutop.alufn = regAlufn.q;
+        alutop.x = regX.q;
+        alutop.y = regY.q;
+        alu = alutop.out;
+        
+        regZ.d = alutop.z;
+        regV.d = alutop.v;
+        regN.d = alutop.n;
+        
+        if(stateCase.q == 0){
+          seg.values = {8h1, 8h1, 8hf, 8hf}; // "11"
+          register_status.d = c{2b0, regAlufn.q};
+          regOut.d = 16b0;
+        }
+        
+        if (stateCase.q == 1){
+          seg.values = {8he, 8hf, 8hf, 8hf};  //"A"                      
+          register_status.d = 6b0;                                         // clear io_led[23:16]
+          regOut.d = regX.q;                                    // show value of A in leds
+        }
+          
+        if (stateCase.q == 2){
+          seg.values = {8h8, 8hf, 8hf, 8hf};                           // io_seg: "   B"
+          regOut.d = regY.q;                                           // show value of B in leds
+        }
+          
+        if (stateCase.q == 3){
+          register_status.d = c{5b0, regZ.q, regV.q, regN.q};          // Show 00000ZVN on io_led[23:16]
+          regOut.d = alu[15:0];                                        // show the ALU RESULT
+          
+          if (regRightAnswer.q == alu[15:0]){                          // CHECKING IF RESULT IN ALU IS CORRECT
+            seg.values = {8hd, 8he, 8h5, 8h5};                         // "PASS"
+          } else {
+            seg.values = {8ha, 8he, 8hb, 8hc} ;                        // "FAIL"
+          }
+        }
+        
+        if (stateCase.q == 4){                                         
+          regX.d = 16b0;                                           
+          regY.d = 16b0;
+          regAlufn.d = 6b0;
+          register_status.d = 8b0;
+          regOut.d = 16b0;
+          regZ.d = b0;
+          regV.d = b0;
+          regN.d = b0;
+          stateCase.d = 0;
+          states.d = states.INITIAL; 
+          }
+        
+         io_led[23:16] = register_status.q;   
+         io_led[15:0] = regOut.q;       
+          
+        // IS THE BUTTON TO GO TO MANUAL STATE PRESSED?       
+        if(io_dip[23]){                   
+          states.d = states.MANUAL;}
+            
+        // In charge of counters & inner change of state      
+        counter.d = counter.q+1;                    
+        if(io_button[3] | counter.q[TIMER]==1){
+          stateCase.d = stateCase.q + 1;         
+          counter.d = 0;
+        }
+    
+    }
+}
