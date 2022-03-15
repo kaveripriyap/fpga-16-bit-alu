@@ -67,6 +67,8 @@ Programmed a 16 bit ALU on Alchitry IDE in Lucid HDL and tested the code on the 
 
 ### Automatic Testing
 
+[![1D Checkoff FGPA 16-bit ALU Automated Testing](https://img.youtube.com/vi/OhLd1niKx9Q/0.jpg)](https://www.youtube.com/watch?v=OhLd1niKx9Q)
+
 ## Core Modules/Files
 
 ### Arithmetic Module (arith_16.luc)
