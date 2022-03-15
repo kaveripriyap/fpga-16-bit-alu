@@ -32,16 +32,17 @@ Programmed a 16 bit ALU on Alchitry IDE in Lucid HDL and tested the code on the 
 * Seven Seg Display
   * In the MANUAL mode, [ - Z V N ] is displayed on the seven seg display.
 
-## Core Modules
+### Core Modules
+
 * ALU Module (alu_16.luc)
 * Arithmetic Module (arith_16.luc)
 * Boolean Module (bool_16.luc)
 * Comparator Module (comp_16.luc)
 * Shifter Module (shift_16.luc)
 
-## ALU Testing
+### ALU Testing
 
-fsm states = {INITIAL, 
+``fsm states = {INITIAL, 
               MANUAL,
               // AUTO
               // ARITHMETIC TEST CASES
@@ -58,7 +59,7 @@ fsm states = {INITIAL,
               SL1, SL2, SL3, SL4,
               SR1, SR2, SR3, SR4,
               SRA1, SRA2, SRA3, SRA4
-              };
+              };```
 
 ### Manual Testing
 
@@ -75,13 +76,10 @@ The video below displays the automatic testing of 50 test cases (edge cases with
 * Press the RIGHT button of the Alchitry AU to switch to AUTO mode.
 * The states automatically transition from one test case to the other till they reach the end of the FSM tester states or until the mode is changed according to a button press.
 
-<p align="center">
    [![1D Checkoff FGPA 16-bit ALU Automated Testing](https://img.youtube.com/vi/OhLd1niKx9Q/0.jpg)](https://www.youtube.com/watch?v=OhLd1niKx9Q)
-</p>
 
 ### ALUFN OPCODE:
 
-<p align="center"> 
 |Operation|ALUFN[21:16]|
 |---------|------------|      
 | ADD     | 000000     |
@@ -97,4 +95,3 @@ The video below displays the automatic testing of 50 test cases (edge cases with
 | CMPLT   | 110101     |
 | CMPLE   | 110111     |
 | MUL     | 100010     |
-</p>
