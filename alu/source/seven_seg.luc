@@ -1,12 +1,12 @@
 module seven_seg (
-    input char[8], // more chars needed for letters or other stuff
+    input char[8], 
     output segs[7]
   ) {
 
   always {
     case (char) {
       0: 
-        segs = 7b0111111; // can also be used as an "O"
+        segs = 7b0111111; 
       1: 
         segs = 7b0000110;
       2: 
@@ -16,13 +16,13 @@ module seven_seg (
       4: 
         segs = 7b1100110;
       5: 
-        segs = 7b1101101; // can also be used as an "S"
+        segs = 7b1101101; 
       6: 
         segs = 7b1111101;
       7: 
         segs = 7b0000111;
       8: 
-        segs = 7b1111111; // can also be used as a "B"
+        segs = 7b1111111; // "B"
       9: 
         segs = 7b1100111;
       10: 
@@ -39,6 +39,12 @@ module seven_seg (
         segs = 7b0000000; // empty, 1hf
       16: 
         segs = 7b0001000; // "_", 2h10
+      17:
+        segs = 7b1011110;  // "d", 2h11
+      18:
+        segs = 7b0111110; // "U", 2h12
+      19:
+        segs = 7b0111001; // "C", 2h13
       default: 
         segs = 7b0000000; // empty display
     }
@@ -49,6 +55,13 @@ module seven_seg (
 PASS = {8hd, 8he, 8h5, 8h5}
 FAIL = {8ha, 8he, 8hb, 8hc}
 A = {8he, 8hf, 8hf, 8hf}
-B = {8h8, 8hf, 8hf, 8hf}      
+B = {8h8, 8hf, 8hf, 8hf}   
+ADD = {8he, 8h11, 8h11, } 
+SUB = {8h5, 8h12, 8h8, }
+MUL = {8h3, 8h12, 8hc, }  
+CMP = {8h13, 8h1, 8h1, } 
+BOO = {8h8, 8h0, 8h0, }  
+SL = {8h5, 8hc, , 8hf}  
+SR = {8h5, 8he, , 8hf} 
    
    */
