@@ -85,14 +85,20 @@ The video below displays the automatic testing of 50 test cases (edge cases with
 |---------|------------|      
 | ADD     | 000000     |
 | SUB     | 000001     |
-| MUL     | 011000     |
-| OR      | 011110     |
-| XOR     | 010110     |
-| “A”     | 011010     |
-| SHL     | 100000     |
-| SHR     | 100001     |
-| SRA     | 100011     |
-| CMPEQ   | 110011     |
-| CMPLT   | 110101     |
-| CMPLE   | 110111     |
-| MUL     | 100010     |
+| MUL     | 000010     |
+| OR      | 010000     |
+| AND     | 010001     |
+| XOR     | 010010     |
+| “A”     | 010011     |
+| "B"     | 010100     |
+| NOR     | 011000     |
+| NAND    | 011001     |
+| NOT "A" | 011011     |
+| NOT "B" | 011100     |
+| CMPEQ   | 110010     |
+| CMPLT   | 110100     |
+| CMPLE   | 110110     |
+| SL      | 100000     |
+| SR      | 100001     |
+| SLA     | 100010     |
+| SRA     | 100011     | 
