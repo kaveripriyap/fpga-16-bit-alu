@@ -11,7 +11,7 @@ module au_top (
     input io_dip [24]       
   ) {
   
-  sig rst;                                                                // RESET
+  sig rst;                  
   
   .clk(clk) {
     reset_conditioner reset_cond;
@@ -53,8 +53,6 @@ module au_top (
     }
   }
   
-  //INSTANTIATION
-
   alu_16 alutop; 
   const TIMER = 28;
   
@@ -64,8 +62,6 @@ module au_top (
   sig alufn[6];
   
   always {
-
-    // INITIALISATION
     reset_cond.in = ~ rst_n;          
     rst = reset_cond.out;             
     usb_tx = usb_rx;                  
@@ -92,32 +88,31 @@ module au_top (
       states.INITIAL:
         seg.values = {8hf, 8hf, 8hf, 8hf};
         
-        if(io_button[4] == 1){                       // RIGHT BUTTON - AUTO
+        if(io_button[4] == 1){ // RIGHT BUTTON - AUTO
           states.d = states.ADD1;
         }
         
-        if(io_dip[23]){                              // LEFT SWITCH ON - MANUAL
+        if(io_dip[23]){ // LEFT DIP SWITCH ON - MANUAL
           seg.values = {8h15, 8h0, 8h0, 8h0};
           states.d = states.MANUAL;
         }
-
     // MANUAL
       states.MANUAL:
-        io_led[23] = b1;                             // MANUAL LED SHOW
+        io_led[23] = b1; // MANUAL LED SHOW
         
-        if(io_button[0]){                            // TOP BUTTON PRESS - io_dip[15:0] WRITE TO X
+        if(io_button[0]){ // TOP BUTTON PRESS - io_dip[15:0] WRITE TO X
           x[15:0] = io_dip[15:0];
           regX.d = x;
           regOut.d = x;
         }
         
-        if(io_button[1]){                            // CENTER BUTTON PRESS - io_dip[15:0] WRITE TO Y
+        if(io_button[1]){ // CENTER BUTTON PRESS - io_dip[15:0] WRITE TO Y
           y[15:0] = io_dip[15:0];
           regY.d = y;
           regOut.d = y;
         }
         
-        if(io_button[2]){                            // DOWN BUTTON PRESS - DO COMPUTATION BASED ON X, Y, ALUFN (io_dip[21:16])
+        if(io_button[2]){ // DOWN BUTTON PRESS - DO COMPUTATION BASED ON X, Y, ALUFN (io_dip[21:16])
           alufn = io_dip[21:16];
           regAlufn.d = alufn;
           alutop.alufn = regAlufn.q;
@@ -133,7 +128,7 @@ module au_top (
           regOut.d = alu[15:0];
         }
         
-        if(io_button[3]){                           // LEFT BUTTON PRESS - RESET
+        if(io_button[3]){ // LEFT BUTTON PRESS - RESET
           regX.d = 16b0;
           regY.d = 16b0;
           regAlufn.d = 6b0;
@@ -146,28 +141,27 @@ module au_top (
         io_led[15:0] = regOut.q; 
         
         // SEVEN SEGMENT [- Z V N]
-
-        if (regZ.q == b1) {                         // Z TRUE
+        if (regZ.q == b1) { // Z TRUE
           seg.values[2] = h1;
         } else {
           seg.values[2] = h0;
         }
         
-        if (regV.q == b1) {                         // V TRUE
+        if (regV.q == b1) { // V TRUE
           seg.values[1] = h1;
         } else {
           seg.values[1] = h0;
         }
         
-        if (regN.q == b1) {                         // N TRUE
+        if (regN.q == b1) { // N TRUE
           seg.values[0] = h1;
         } else {
           seg.values[0] = h0;
         }
         
-        io_led[21:16] = regAlufn.q;                 // ALUFN
+        io_led[21:16] = regAlufn.q; // ALUFN
         
-        if(!io_dip[23]){                            // BACK TO INITIAL MODE
+        if(!io_dip[23]){ 
           regX.d = 16b0;
           regY.d = 16b0;
           regAlufn.d = 6b0;
@@ -177,11 +171,9 @@ module au_top (
           regN.d = b0;
           states.d = states.INITIAL;
         }
-
       // END MANUAL
         
       // START AUTO     
-
       states.ADD1:
         // X = 0, Y = 0, EXPECTED OUTPUT = 0 
         regAlufn.d = 6b000000;
@@ -206,7 +198,7 @@ module au_top (
         
         if (stateCase.q == 1){
           seg.values = {8he, 8hf, 8hf, 8hf};     // "A"                    
-          register_status.d = 6b0;               
+          register_status.d = 6b0;               // empties io_led[23:16]
           regOut.d = regX.q;                     // displays A value in io_led[15:0]
         }
           
@@ -216,7 +208,10 @@ module au_top (
         }
           
         if (stateCase.q == 3){
-          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // displays 00000ZVN on io_led[23:16]
+          if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
+          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                 // displays ALU output value in io_led[15:0]
           
           if (regRightAnswer.q == alu[15:0]){   // checking if alu output == pre-computed output
@@ -226,8 +221,8 @@ module au_top (
           }
         }
         
-        if (stateCase.q == 4){                  // clear all values and move to next test case 
-          regX.d = 16b0;                         
+        if (stateCase.q == 4){                   // Transition to next operation case
+          regX.d = 16b0;                         // Clear all stored value
           regY.d = 16b0;
           regAlufn.d = 6b0;
           register_status.d = 8b0;
@@ -239,7 +234,7 @@ module au_top (
           states.d = states.ADD2; 
           }
         
-         io_led[23:16] = register_status.q;      
+         io_led[23:16] = register_status.q;      // ALUFN[5:0] or 000ZVN
          io_led[15:0] = regOut.q;                 
           
         if(io_dip[23]){                          
@@ -269,35 +264,38 @@ module au_top (
         regN.d = alutop.n;
         
         if(stateCase.q == 0){
-          seg.values = {8he, 8h11, 8h11, 8h2};   // "Add2"
+          seg.values = {8he, 8h11, 8h11, 8h2}; // "Add2"
           register_status.d = c{2b0, regAlufn.q};
           regOut.d = 16b0;
         }
         
         if (stateCase.q == 1){
-          seg.values = {8he, 8hf, 8hf, 8hf};    // "A"                      
-          register_status.d = 6b0;            
-          regOut.d = regX.q;   
+          seg.values = {8he, 8hf, 8hf, 8hf};  //"A"                      
+          register_status.d = 6b0;            // clear io_led[23:16]
+          regOut.d = regX.q;   // show value of A in leds
         }
           
         if (stateCase.q == 2){
-          seg.values = {8h8, 8hf, 8hf, 8hf};   // "B"
-          regOut.d = regY.q;   
+          seg.values = {8h8, 8hf, 8hf, 8hf};  // io_seg: "B"
+          regOut.d = regY.q;   // show value of B in leds
         }
           
         if (stateCase.q == 3){
-          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   
-          regOut.d = alu[15:0];               // ALU RESULT
+          if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
+          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
+          regOut.d = alu[15:0];      // show the ALU RESULT
           
-          if (regRightAnswer.q == alu[15:0]){ 
+          if (regRightAnswer.q == alu[15:0]){ // Compare expected correct result & the alu result
             seg.values = {8hd, 8he, 8h5, 8h5};// "PASS"
           } else {
             seg.values = {8ha, 8he, 8hb, 8hc};// "FAIL"
           }
         }
         
-        if (stateCase.q == 4){               // clear all values and move to next test case 
-          regX.d = 16b0;                     
+        if (stateCase.q == 4){                // Transition to next operation case
+          regX.d = 16b0;                      // Clear all stored value
           regY.d = 16b0;
           regAlufn.d = 6b0;
           register_status.d = 8b0;
@@ -309,18 +307,18 @@ module au_top (
           states.d = states.ADD3; 
           }
         
-         io_led[23:16] = register_status.q;   
-         io_led[15:0] = regOut.q;   
+         io_led[23:16] = register_status.q;   // Show what is stored in store_status.q - can be ALUFN[5:0] or 000ZVN
+         io_led[15:0] = regOut.q;    // Show what is stored in store_temp.q - can be either A[15:0] or B[15:0] depending on inner stateCase 
           
           
         // If triggered back to MANUAL STATE      
-        if(io_dip[23]){                   
+        if(io_dip[23]){                   //checking switch for manual state
           states.d = states.MANUAL;}
             
-              
-        counter.d = counter.q+1;                // clock + 1
+        // In charge of counters & inner change of state      
+        counter.d = counter.q+1;                //add 1 to clock every time code loops
         if(io_button[3] | counter.q[TIMER]==1){
-          stateCase.d = stateCase.q + 1;       
+          stateCase.d = stateCase.q + 1;        //if clock timer reaches TIMER or if button input is detected
           counter.d = 0;
         }
         
@@ -351,28 +349,31 @@ module au_top (
         
         if (stateCase.q == 1){
           seg.values = {8he, 8hf, 8hf, 8hf};  //"A"                      
-          register_status.d = 6b0;            
-          regOut.d = regX.q;   
+          register_status.d = 6b0;            // clear io_led[23:16]
+          regOut.d = regX.q;   // show value of A in leds
         }
           
         if (stateCase.q == 2){
-          seg.values = {8h8, 8hf, 8hf, 8hf};  // "B"
-          regOut.d = regY.q;  
+          seg.values = {8h8, 8hf, 8hf, 8hf};  // io_seg: "B"
+          regOut.d = regY.q;   // show value of B in leds
         }
           
         if (stateCase.q == 3){
-          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   
-          regOut.d = alu[15:0];              // ALU RESULT
+          if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
+          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
+          regOut.d = alu[15:0];      // show the ALU RESULT
           
-          if (regRightAnswer.q == alu[15:0]){ 
+          if (regRightAnswer.q == alu[15:0]){ // Compare expected correct result & the alu result
             seg.values = {8hd, 8he, 8h5, 8h5};// "PASS"
           } else {
             seg.values = {8ha, 8he, 8hb, 8hc};// "FAIL"
           }
         }
         
-        if (stateCase.q == 4){               // clear all values and move to next test case 
-          regX.d = 16b0;                      
+        if (stateCase.q == 4){                // Transition to next operation case
+          regX.d = 16b0;                      // Clear all stored value
           regY.d = 16b0;
           regAlufn.d = 6b0;
           register_status.d = 8b0;
@@ -384,18 +385,18 @@ module au_top (
           states.d = states.ADD4; 
           }
         
-         io_led[23:16] = register_status.q;   
-         io_led[15:0] = regOut.q;    
+         io_led[23:16] = register_status.q;   // Show what is stored in store_status.q - can be ALUFN[5:0] or 000ZVN
+         io_led[15:0] = regOut.q;    // Show what is stored in store_temp.q - can be either A[15:0] or B[15:0] depending on inner stateCase 
           
           
         // If triggered back to MANUAL STATE      
-        if(io_dip[23]){                  
+        if(io_dip[23]){                   //checking switch for manual state
           states.d = states.MANUAL;}
             
-              
-        counter.d = counter.q+1;                
+        // In charge of counters & inner change of state      
+        counter.d = counter.q+1;                //add 1 to clock every time code loops
         if(io_button[3] | counter.q[TIMER]==1){
-          stateCase.d = stateCase.q + 1;        
+          stateCase.d = stateCase.q + 1;        //if clock timer reaches TIMER or if button input is detected
           counter.d = 0;
         }
 
@@ -423,28 +424,31 @@ module au_top (
         
         if (stateCase.q == 1){
           seg.values = {8he, 8hf, 8hf, 8hf};  //"A"                      
-          register_status.d = 6b0;        
-          regOut.d = regX.q;   
+          register_status.d = 6b0;            // clear io_led[23:16]
+          regOut.d = regX.q;   // show value of A in leds
         }
           
         if (stateCase.q == 2){
-          seg.values = {8h8, 8hf, 8hf, 8hf};  // "B"
-          regOut.d = regY.q; 
+          seg.values = {8h8, 8hf, 8hf, 8hf};  // io_seg: "B"
+          regOut.d = regY.q;   // show value of B in leds
         }
           
         if (stateCase.q == 3){
-          register_status.d = c{5b0, regZ.q, regV.q, regN.q};
-          regOut.d = alu[15:0];      //ALU RESULT
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
+          register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
+          regOut.d = alu[15:0];      // show the ALU RESULT
           
-          if (regRightAnswer.q == alu[15:0]){ 
+          if (regRightAnswer.q == alu[15:0]){ // Compare expected correct result & the alu result
             seg.values = {8hd, 8he, 8h5, 8h5};// "PASS"
           } else {
             seg.values = {8ha, 8he, 8hb, 8hc};// "FAIL"
           }
         }
         
-        if (stateCase.q == 4){                // clear all values and move to next test case 
-          regX.d = 16b0;                      
+        if (stateCase.q == 4){                // Transition to next operation case
+          regX.d = 16b0;                      // Clear all stored value
           regY.d = 16b0;
           regAlufn.d = 6b0;
           register_status.d = 8b0;
@@ -456,16 +460,18 @@ module au_top (
           states.d = states.ADD5; 
           }
         
-         io_led[23:16] = register_status.q;   
-         io_led[15:0] = regOut.q;    
+         io_led[23:16] = register_status.q;   // Show what is stored in store_status.q - can be ALUFN[5:0] or 000ZVN
+         io_led[15:0] = regOut.q;    // Show what is stored in store_temp.q - can be either A[15:0] or B[15:0] depending on inner stateCase 
           
-               
-        if(io_dip[23]){                   
+          
+        // If triggered back to MANUAL STATE      
+        if(io_dip[23]){                   //checking switch for manual state
           states.d = states.MANUAL;}
-       
-        counter.d = counter.q+1;                
-        if(io_button[3] | counter.q[TIMER]==1){ 
-          stateCase.d = stateCase.q + 1;       
+            
+        // In charge of counters & inner change of state      
+        counter.d = counter.q+1;                //add 1 to clock every time code loops
+        if(io_button[3] | counter.q[TIMER]==1){
+          stateCase.d = stateCase.q + 1;        //if clock timer reaches TIMER or if button input is detected
           counter.d = 0;
         }
 
@@ -503,6 +509,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];      // show the ALU RESULT
           
@@ -575,6 +584,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];      // show the ALU RESULT
           
@@ -648,6 +660,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];      // show the ALU RESULT
           
@@ -720,6 +735,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];      // show the ALU RESULT
           
@@ -792,6 +810,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];      // show the ALU RESULT
           
@@ -863,6 +884,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];      // show the ALU RESULT
           
@@ -934,6 +958,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];      // show the ALU RESULT
           
@@ -1005,6 +1032,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];      // show the ALU RESULT
           
@@ -1078,6 +1108,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};          // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                        // show the ALU RESULT
           
@@ -1150,6 +1183,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};          // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                        // show the ALU RESULT
           
@@ -1221,6 +1257,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};          // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                        // show the ALU RESULT
           
@@ -1292,6 +1331,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};          // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                        // show the ALU RESULT
           
@@ -1363,6 +1405,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];         // show the ALU RESULT
           
@@ -1435,6 +1480,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];         // show the ALU RESULT
           
@@ -1508,6 +1556,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -1582,6 +1633,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -1656,6 +1710,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -1729,6 +1786,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -1801,6 +1861,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -1873,6 +1936,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -1944,6 +2010,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -2016,6 +2085,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -2089,6 +2161,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -2162,6 +2237,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -2234,6 +2312,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -2307,6 +2388,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -2380,6 +2464,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -2452,6 +2539,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -2524,6 +2614,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -2596,6 +2689,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -2669,6 +2765,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -2741,6 +2840,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -2814,6 +2916,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -2887,6 +2992,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -2961,6 +3069,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -3038,6 +3149,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -3112,6 +3226,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -3187,6 +3304,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -3262,6 +3382,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -3335,6 +3458,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -3408,6 +3534,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -3481,6 +3610,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -3554,6 +3686,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -3627,6 +3762,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -3700,6 +3838,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
@@ -3771,6 +3912,9 @@ module au_top (
         }
           
         if (stateCase.q == 3){
+	    if(io_dip[22]) {
+            alu[15:0] = 16b0101010101010101;
+          }
           register_status.d = c{5b0, regZ.q, regV.q, regN.q};   // Show 00000ZVN on io_led[23:16]
           regOut.d = alu[15:0];                                   // show the ALU RESULT
           
