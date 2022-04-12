@@ -50,28 +50,26 @@ module game_CU ( // game control unit
   always {
   
     //initial values for all the components in the beta, it is changed according to the FSM
-    alufn = b111111;
+    alufn = b111111; //CHANGE
     asel = b000;
     bsel = b00;
     we = b0000;
     ra = b0000;
     rb = b0000;
-    rc = b1111;
+    rc = b0000;
     wdsel = b0;
     led = b000000000;
     match_led = b0; 
-    timer.d = 0; //initial value input into the timer, can be changed later
-    if (rst){
+   // timer.d = 0; //initial value input into the timer, can be changed later
+   // if (rst){
       // default values assigned above are left as it is,
-    }
-    else{
+    //}
+    //else{
       case(game_fsm.q){
             
         game_fsm.START: // control unit starts here , this initializes the level register
-          rc = h9; //lvl_count
-          asel = b010; // h1
-          we = b1;
-          alufn = b011010; //'A'
+          
+          //initialize isP1=1
           game_fsm.d = game_fsm.CLEAR;
           
         game_fsm.CLEAR: //initialise register for later use
@@ -315,5 +313,5 @@ module game_CU ( // game control unit
           game_fsm.d = game_fsm.START;
           
       }
-  }
+  
 }
