@@ -68,9 +68,8 @@ module game_miniBeta (
     case (game_controlunit.wdsel){
       b00 : regfile.data = game_alu.out;
       b01 : regfile.data = b1111111111111111;
-      b10 : regfile.data = b0101010101010101;
-      b11 : regfile.data[8:0] = rand.ptn;
-            regfile.data[15:9] = b0000000;
+      b10 : regfile.data = b0000000000001111;
+      b11 : regfile.data = b0000000000000000;
       default :
           regfile.data = game_alu.out;
     }
@@ -78,5 +77,6 @@ module game_miniBeta (
     // output to the au_top
     led = game_controlunit.led;
     check_led = game_controlunit.match_led;
+    
   }
 }
