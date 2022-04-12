@@ -3,14 +3,17 @@ module game_miniBeta (
     input clk,  // clock
     input rst,  // reset
     output led[9],
+    output seven_seg_1[4],
+    output seven_seg_2[4],
+    output seven_seg_3[4],
     output check_led
   ) {
   
-  //temp variables for A and B values to be inputted in the ALU
+  // temp variables for A and B values to be inputted in the ALU
   sig inputAlu_a[16];
   sig inputAlu_b[16];
   
-  alu game_alu; //alu module of the game, our games uses boole, comparator, increment and decrement modules
+  alu_16 game_alu; // alu module of the game, our games uses boole, comparator, increment and decrement modules
 
   .clk(clk){
     .rst(rst){
@@ -19,15 +22,14 @@ module game_miniBeta (
   }
   .clk(slow_timer.value){
     .rst(rst){
-      random_pattern rand; //our randoom module
-      game_CU game_controlunit; //control unit module of the game
-      game_miniRegfile regfile; //regfile module of the game
+      game_cu game_controlunit; // control unit module of the game
+      game_miniRegfile regfile; // regfile module of the game
     }
   }
   
   always {
     
-    //Setup REGFILE unit 
+    // setup REGFILE unit 
     regfile.we = game_controlunit.we;
     regfile.write_address = game_controlunit.rc;
     regfile.read_address_a = game_controlunit.ra;
@@ -35,36 +37,34 @@ module game_miniBeta (
     
     game_controlunit.rbData = regfile.out_b;
     
-    //asel mux
+    // asel mux
     case(game_controlunit.asel){
-      b000  : inputAlu_a = regfile.out_a;
-      b001  : inputAlu_a = h0000; 
-      b010  : inputAlu_a = h0001;
-      b011  : inputAlu_a = h0026;
-      b100  : inputAlu_a[8:0] = btn; 
-              inputAlu_a[15:9] = b0000000;
+      b00  : inputAlu_a = regfile.out_a;
+      b01  : inputAlu_a[1:0] = btn; 
+              inputAlu_a[15:2] = b00000000000000;
       default : 
           inputAlu_a = h0000;
     }
     
-    //bsel mux
+    // bsel mux
     case(game_controlunit.bsel){
-      b00 : inputAlu_b = regfile.out_b;
-      b01 : inputAlu_b = h0000;
-      b10 : inputAlu_b = h0001;
-      b11 : inputAlu_b = h0009;
+      b000 : inputAlu_b = regfile.out_b;
+      b001 : inputAlu_b = h0000;
+      b010 : inputAlu_b = h0001;
+      b011 : inputAlu_b = h0005;
+      b100 : inputAlu_b = h000F;
       default: 
           inputAlu_b = h0000;
       
     }
     
-    //ALU
+    // ALU
     game_alu.x = inputAlu_a;
     game_alu.y = inputAlu_b;
     game_alu.alufn = game_controlunit.alufn;
    
     
-    //wdsel mux
+    // wdsel mux
     case (game_controlunit.wdsel){
       b00 : regfile.data = game_alu.out;
       b01 : regfile.data = b1111111111111111;
@@ -75,7 +75,7 @@ module game_miniBeta (
           regfile.data = game_alu.out;
     }
     
-    //output to the au_top
+    // output to the au_top
     led = game_controlunit.led;
     check_led = game_controlunit.match_led;
   }
