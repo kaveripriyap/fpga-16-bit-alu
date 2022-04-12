@@ -1,0 +1,326 @@
+module game_CU ( // game control unit
+    input clk,  // clock
+    input rst,  // reset
+  //  input st,   // slow timer ignored for now but needs to be implemented
+    
+    input rbData[16],
+    output we,
+    output ra[4],
+    output rb[4],
+    output rc[4],
+    output asel[3],
+    output bsel[2],
+    output wdsel[2],
+    output alufn[6],
+    output led[9],
+    output match_led
+  ) {
+  
+  .clk(clk){
+  
+  dff timer[16];
+  fsm game_fsm={
+    START,
+    IDLE,
+    CMP_SEQCOUNT_LVLCOUNT_1,
+    READ_SEQ_LVL_CMP_1,
+    STORE_RANDOM_PAT,
+    RESET_SEQ_COUNT_1,
+    RESET_SEQ_COUNT_2,
+    GET_SEQ_STORE,
+    INCR_SEQCOUNT_1,
+    LVL_INDICATOR,
+    CLEAR,
+    SET_TIMER_FOR_INPUT,
+    GET_RANDOM_PAT,
+    CMP_INPUT_PAT,
+    DECR_TIMER_FOR_INPUT,
+    CMP_TIMER_FOR_INPUT,
+    READ_TIMER_INPUT_2,
+    READ_INPUT_PAT_CMP,
+    LOSE,
+    SET_LED,
+    DISPLAY_CHECK_LED,
+    INCR_SEQCOUNT_2,
+    CMP_SEQCOUNT_LVLCOUNT_2,
+    READ_SEQ_LVL_CMP_2,
+    CMP_LVLCOUNT_FINAL,
+    //  liwen
+    INCR_LVL_COUNT,
+    READ_CMP_LVL_COUNT,
+    WIN,
+    DISPLAY,
+    GET_INPUT_BUT
+        
+  };
+  }
+  always {
+  
+    //initial values for all the components in the beta, it is changed according to the FSM
+    alufn = b111111;
+    asel = b000;
+    bsel = b00;
+    we = b0000;
+    ra = b0000;
+    rb = b0000;
+    rc = b1111;
+    wdsel = b0;
+    led = b000000000;
+    match_led = b0; 
+    timer.d = 0; //initial value input into the timer, can be changed later
+    if (rst){
+      // default values assigned above are left as it is,
+    }
+    else{
+      case(game_fsm.q){
+            
+        game_fsm.START: // control unit starts here , this initializes the level register
+          rc = h9; //lvl_count
+          asel = b010; // h1
+          we = b1;
+          alufn = b011010; //'A'
+          game_fsm.d = game_fsm.CLEAR;
+          
+        game_fsm.CLEAR: //initialise register for later use
+          rc = hD; // temp
+          asel = 001;
+          alufn = b011010; //'A'
+          we = 1;
+          game_fsm.d = game_fsm.IDLE;
+          
+        game_fsm.IDLE: // loops in this state until user clicks the middle button to start the game
+          asel = b100;
+          led = 9b000010000;
+          rc = hD;
+          we = 1;
+          alufn = b011010; //'A'
+          rb = hD;
+          if(rbData[4] == 1)
+            game_fsm.d = game_fsm.LVL_INDICATOR;
+          else
+            game_fsm.d = game_fsm.IDLE;
+            
+        game_fsm.LVL_INDICATOR: // Indicates that the level is starting 
+          rb = h9;
+          led = b010101010; 
+                    
+          if(timer.q==b1100000){
+            game_fsm.d = game_fsm.RESET_SEQ_COUNT_1;
+          }
+          else{
+            game_fsm.d = game_fsm.LVL_INDICATOR;
+            timer.d = timer.q + b1;
+          }
+          
+        game_fsm.RESET_SEQ_COUNT_1: // this state resets the sequence count register, sequence count helps us keep track of the nth pattern being displayed
+          rc = hA; //seq_count
+          asel = b001; // A = 0 for ALU input
+          we = 1;
+          alufn = b011010; //'A'     
+          game_fsm.d = game_fsm.CMP_SEQCOUNT_LVLCOUNT_1;
+        
+        game_fsm.CMP_SEQCOUNT_LVLCOUNT_1: // this state compares the sequence count and level count
+          ra = hA; //seq_count
+          rb = h9; //lvl_count
+          rc = hF; //temp
+          we = b1;
+          alufn = b110011; //CMPEQ
+          game_fsm.d = game_fsm.READ_SEQ_LVL_CMP_1;
+                 
+        game_fsm.READ_SEQ_LVL_CMP_1: // checks whether the compare is true or false, if it is true, it proceeds to the next part of the game which is button input
+          rb = hF;   // otherwise it goes to store random pattern to store the pattern in the specifc register and displays it to the user to memorise
+          if(rbData==16h0000)
+            game_fsm.d = game_fsm.STORE_RANDOM_PAT;
+          else
+            game_fsm.d = game_fsm.RESET_SEQ_COUNT_2;
+          
+        game_fsm.RESET_SEQ_COUNT_2: // resets sequence count to check the patterns with respect to users input
+          rc = hA; //seq_count
+          asel = b001; // A = 0 for ALU input
+          we = b1;
+          alufn = b011010; //'A'    
+          game_fsm.d = game_fsm.SET_TIMER_FOR_INPUT;
+          
+        game_fsm.STORE_RANDOM_PAT: //stores random pattern generates by random module and stores it in the specific register indicated by sequence count
+          rb = hA; //sequence count
+          rc = rbData[3:0];
+          wdsel = b11; //random number
+          we = b1;
+          game_fsm.d = game_fsm.GET_SEQ_STORE;
+          
+        game_fsm.GET_SEQ_STORE: // fetches the random pattern from the register and stores it on temporary register to display to the user
+          rb = hA; // //seq_count
+          ra = rbData[3:0];
+          rc = hE; // temp
+          we = b1;
+          alufn = b011010; //'A'
+          game_fsm.d = game_fsm.SET_LED;
+          
+        game_fsm.SET_LED: //displays the pattern stored in temperorary register and makes use of timer to loop in the state until timer gets over
+          rb  = hE; //temp
+          led = rbData[8:0];
+          match_led = b1;
+          if(timer.q==b1111000){
+            game_fsm.d = game_fsm.INCR_SEQCOUNT_1;
+          }
+          else{
+            game_fsm.d = game_fsm.SET_LED;
+            timer.d = timer.q + b1;
+          }
+            
+         game_fsm.INCR_SEQCOUNT_1: // increments the value of sequence count and moves to the next state to compare the sequence count with level count 
+          ra = hA; //sequence count
+          rc = hA; //sequence count
+          we = b1;
+          alufn = b000100;      
+          game_fsm.d = game_fsm.CMP_SEQCOUNT_LVLCOUNT_1;
+          
+          //Gargi
+        game_fsm.SET_TIMER_FOR_INPUT: // sets timer register to 38 
+          rc = hC; //set timer
+          asel = b011;     
+          we = b1;
+          alufn = b011010;    //A
+          game_fsm.d = game_fsm.GET_RANDOM_PAT;
+
+        game_fsm.GET_RANDOM_PAT: // this state stores random pattern in the temporary register
+          rb = hA; //sequence count
+          ra = rbData[3:0];
+          rc = hD;      //temp to store pattern
+          we = b1;
+          alufn = b011010;    //A
+          game_fsm.d = game_fsm.GET_INPUT_BUT;
+                    
+        game_fsm.GET_INPUT_BUT: // this state stores users input in another register
+          asel = b100; // A = button input
+          alufn = b011010;
+          rc = hE;
+          we = b1;
+          game_fsm.d = game_fsm.CMP_INPUT_PAT;
+
+        game_fsm.CMP_INPUT_PAT: //this state compares random pattern and user input and stores it in the third temporary register 
+         // asel = b100;  //button input
+          ra = hE;
+          rb = hD;      //temp storing pattern
+          rc = hF;      //new temp to store compare value
+          we = b1;
+        //  led = rbData[8:0];
+          alufn = b110011;    //CMPEQ
+          game_fsm.d = game_fsm.READ_INPUT_PAT_CMP;
+          
+        
+        game_fsm.READ_INPUT_PAT_CMP: //this state checks whether the input is right or wrong, it loops through the states if wrong, other displays check led
+          rb = hF; //should have been hF but that doesnt work
+          if(rbData == 16h0001)
+            game_fsm.d = game_fsm.DISPLAY_CHECK_LED;
+          else 
+            game_fsm.d = game_fsm.DECR_TIMER_FOR_INPUT;
+
+        game_fsm.DECR_TIMER_FOR_INPUT: //decrements the timer register value
+          ra = hC; //timer store
+          rc = hC; //timer store
+          we = b1;
+          alufn = b001110;    //decrement
+          game_fsm.d = game_fsm.CMP_TIMER_FOR_INPUT;
+
+        game_fsm.CMP_TIMER_FOR_INPUT: //if the timer register is equal to 0 (has completed 38 clock cycles)
+          ra = hC;
+          bsel = b01;
+          rc = hF;
+          we = b1;
+          alufn = b110011;    //CMPEQ
+          game_fsm.d = game_fsm.READ_TIMER_INPUT_2;
+
+        game_fsm.READ_TIMER_INPUT_2: //checks whether timer register is equal to 0, if it is, proceed to lose state otherwise get the input of the button again and loop through the states
+          rb = hF; 
+          if(rbData==16h0001)
+            game_fsm.d = game_fsm.LOSE;
+          else 
+            game_fsm.d = game_fsm.GET_INPUT_BUT;
+            
+        //Joshua 
+            
+       game_fsm.DISPLAY_CHECK_LED: // displays check led to indicate that the user input is correct, stays in the state until timer is equal to b110000
+          match_led = b1;
+          if(timer.q==b1100000){
+            game_fsm.d = game_fsm.INCR_SEQCOUNT_2;
+          }
+          else{
+            game_fsm.d = game_fsm.DISPLAY_CHECK_LED;
+            timer.d = timer.q + b1;
+          }
+          
+        game_fsm.INCR_SEQCOUNT_2: // incrememnts sequence count value
+          ra = hA;
+          rc = hA;
+          we = b1;
+          alufn = b000100; //increment 
+          game_fsm.d = game_fsm.CMP_SEQCOUNT_LVLCOUNT_2;
+          
+        game_fsm.CMP_SEQCOUNT_LVLCOUNT_2: //compares sequence count register with level register
+          ra = hA;
+          rb = h9;
+          rc = hF;
+          we = b1;
+          alufn = b110011;
+          game_fsm.d = game_fsm.READ_SEQ_LVL_CMP_2;
+          
+        game_fsm.READ_SEQ_LVL_CMP_2: //if its equal, it proceeds to the next level, otherwise goes to the next pattern 
+          rb = hF;
+          if(rbData==16h0001)
+            game_fsm.d = game_fsm.CMP_LVLCOUNT_FINAL;
+          else
+            game_fsm.d = game_fsm.SET_TIMER_FOR_INPUT; 
+          
+        game_fsm.CMP_LVLCOUNT_FINAL: // compares whether user has completed level 9,
+          ra = h9;
+          rc = hF;
+          bsel = b11;
+          we = b1;
+          alufn = b110011;      
+         game_fsm.d = game_fsm.READ_CMP_LVL_COUNT; 
+          
+        game_fsm.LOSE: //this state stores the lose value in temporary register which is displayed later
+          rc = hF;
+          we = b1;
+          wdsel = b10; //stores the lose led display sequence      
+          game_fsm.d = game_fsm.DISPLAY;
+          
+       //liwen
+        game_fsm.READ_CMP_LVL_COUNT: // if user has completed level 9, he will encounter the win scenario otherwise he will incrememnt the level and play the next level
+          rb = hF;
+          if(rbData==16h0001)
+            game_fsm.d = game_fsm.WIN;
+          else
+            game_fsm.d = game_fsm.INCR_LVL_COUNT;  
+             
+        game_fsm.INCR_LVL_COUNT: //increments level count value
+          ra = h9;
+          rc = h9;
+          we = b1;
+          alufn = b000100;        
+          game_fsm.d = game_fsm.LVL_INDICATOR;
+          
+        game_fsm.WIN: //this state stores the win value in temporary register which is displayed later
+          wdsel = b01; //stores the win led display sequnce
+          rc = hF;
+          we = b1;    
+          game_fsm.d = game_fsm.DISPLAY;
+          
+        game_fsm.DISPLAY: //this displays the sequence stores in the temporary register (either win or lose) until the timer value is equal to bb1100000
+          rb = hF;
+          led[8:0] = rbData[8:0];
+          if(timer.q==b11000000){
+            game_fsm.d = game_fsm.START;
+          }
+          else{
+            game_fsm.d = game_fsm.DISPLAY;
+            timer.d = timer.q + b1;
+          }
+          
+        default: //default value assigns the state to START of the game
+          game_fsm.d = game_fsm.START;
+          
+      }
+  }
+}
