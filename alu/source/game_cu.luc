@@ -68,87 +68,118 @@ module game_CU ( // game control unit
     //else{
       case(game_fsm.q){
             
-        game_fsm.START: // control unit starts here , this initializes the level register
+        game_fsm.START: // control unit starts here 
           
           //initialize isP1=1
           game_fsm.d = game_fsm.CLEAR;
           
-        game_fsm.CLEAR: //initialise register for later use
-          rc = hD; // temp
-          asel = 001;
-          alufn = b011010; //'A'
-          we = 1;
-          game_fsm.d = game_fsm.IDLE;
+        game_fsm.IDLE: //
+          //CHECK ISP1=1
+          if isp1=1 {
+            game_fsm.d = game_fsm.PLAYER1_PRESS;
+          }
+          if isp1=0{
+            game_fsm.d = game_fsm.PLAYER2_PRESS;
+          }
           
-        game_fsm.IDLE: // loops in this state until user clicks the middle button to start the game
-          asel = b100;
-          led = 9b000010000;
-          rc = hD;
-          we = 1;
-          alufn = b011010; //'A'
-          rb = hD;
-          if(rbData[4] == 1)
-            game_fsm.d = game_fsm.LVL_INDICATOR;
-          else
-            game_fsm.d = game_fsm.IDLE;
+          
+        game_fsm.PLAYER1_PRESS: // loops in this state until user clicks the middle button to start the game
+          //for loop to store p1_sequence
+          game_fsm.d = game_fsm.INCREMENT_SEQUENCECOUNT;
+
             
-        game_fsm.LVL_INDICATOR: // Indicates that the level is starting 
-          rb = h9;
-          led = b010101010; 
-                    
-          if(timer.q==b1100000){
-            game_fsm.d = game_fsm.RESET_SEQ_COUNT_1;
-          }
-          else{
-            game_fsm.d = game_fsm.LVL_INDICATOR;
-            timer.d = timer.q + b1;
-          }
+        game_fsm.PLAYER2_PRESS: // Indicates that the level is starting 
+          //for loop to store p1_sequence
+          game_fsm.d = game_fsm.INCREMENT_SEQUENCECOUNT;
+
+        game_fsm.INCREMENT_SEQUENCECOUNT: // Indicates that the level is starting 
+          alufn = 6b000000; //ADDC
+          asel = b0 ;
+          bsel = b1;
+          ra =
+          rb =
+          rc =
+          we = 
+
+          game_fsm.d = game_fsm.CPMLEQ_SEQUENCECOUNT_1;
+
+                
+
           
-        game_fsm.RESET_SEQ_COUNT_1: // this state resets the sequence count register, sequence count helps us keep track of the nth pattern being displayed
-          rc = hA; //seq_count
-          asel = b001; // A = 0 for ALU input
-          we = 1;
-          alufn = b011010; //'A'     
-          game_fsm.d = game_fsm.CMP_SEQCOUNT_LVLCOUNT_1;
+        game_fsm.CPMLEQ_SEQUENCECOUNT_1: // this state resets the sequence count register, sequence count helps us keep track of the nth pattern being displayed
+          
+          asel = b0; 
+          bsel = b1;
+          ra= ;
+          rb= ;
+          rc= ;
+          we = b1;
         
-        game_fsm.CMP_SEQCOUNT_LVLCOUNT_1: // this state compares the sequence count and level count
-          ra = hA; //seq_count
-          rb = h9; //lvl_count
-          rc = hF; //temp
+          alufn = b011010; //COMPLEQ
+          if (rc.q == b1) {
+            game_fsm.d = game_fsm.NOT_ISP1;
+          }
+          if (rc.q == b0){
+            game_fsm.d = game_fsm.CMPEQ_P1SEQUENCE_P2SEQUENCE;
+          }
+
+
+          ]
+          
+        
+        game_fsm.NOT_ISP1: // CONVERTS P1 TO  0
+          alufn = b1011 ; // NOT_ISP1
+          asel = b0;
+          bsel = b1;
+          ra =  ;
+          rb = ;
+          rc=  ;
           we = b1;
-          alufn = b110011; //CMPEQ
-          game_fsm.d = game_fsm.READ_SEQ_LVL_CMP_1;
+          
+          game_fsm.d = game_fsm.IDLE;
                  
-        game_fsm.READ_SEQ_LVL_CMP_1: // checks whether the compare is true or false, if it is true, it proceeds to the next part of the game which is button input
-          rb = hF;   // otherwise it goes to store random pattern to store the pattern in the specifc register and displays it to the user to memorise
-          if(rbData==16h0000)
-            game_fsm.d = game_fsm.STORE_RANDOM_PAT;
+        game_fsm.CMPEQ_P1SEQUENCE_P2SEQUENCE: //  compares sequences of the two players to see if they are equal
+          alufn =  b110010 ; //COMPEQ
+          asel = b0;
+          bsel = b0;
+          ra= 
+          rb = 
+          rc = 
+          we = b1
+
+          if(rc.q == b1)
+            game_fsm.d = game_fsm.UPDATE_LED_GREEN;
           else
-            game_fsm.d = game_fsm.RESET_SEQ_COUNT_2;
+            game_fsm.d = game_fsm.UPDATE_LED_RED;
           
-        game_fsm.RESET_SEQ_COUNT_2: // resets sequence count to check the patterns with respect to users input
-          rc = hA; //seq_count
-          asel = b001; // A = 0 for ALU input
-          we = b1;
-          alufn = b011010; //'A'    
-          game_fsm.d = game_fsm.SET_TIMER_FOR_INPUT;
+        game_fsm.UPDATE_LED_GREEN: // Led turns green if sequence is equal
+          //  ADD STATEMENTS FOR LED
+          game_fsm.d = CPMLEQ_SEQUENCECOUNT_16;
           
-        game_fsm.STORE_RANDOM_PAT: //stores random pattern generates by random module and stores it in the specific register indicated by sequence count
-          rb = hA; //sequence count
-          rc = rbData[3:0];
-          wdsel = b11; //random number
-          we = b1;
+        game_fsm.UPDATE_LED_RED: //Led turns Red if sequence is wrong
+          // ADD STATEMENTS FOR LED
           game_fsm.d = game_fsm.GET_SEQ_STORE;
           
-        game_fsm.GET_SEQ_STORE: // fetches the random pattern from the register and stores it on temporary register to display to the user
-          rb = hA; // //seq_count
-          ra = rbData[3:0];
-          rc = hE; // temp
-          we = b1;
-          alufn = b011010; //'A'
-          game_fsm.d = game_fsm.SET_LED;
+        game_fsm.CPMLEQ_SEQUENCECOUNT_16: // to check if sequence count is 16 
+          alufn =
+          asel =
+          bsel =
+          ra= 
+          rb =
+          rc= 
+          we= 
+          if (rc.q == b1){
+            game_fsm.d = game_fsm.NOT_ISP1_CMP;
+
+          }
+          else{
+
+            game_fsm.d = game_fsm.INCREMENT_P1_SCORE;
+          }
           
-        game_fsm.SET_LED: //displays the pattern stored in temperorary register and makes use of timer to loop in the state until timer gets over
+
+          
+        game_fsm.NOT_ISP1_CMP; //displays the pattern stored in temperorary register and makes use of timer to loop in the state until timer gets over
           rb  = hE; //temp
           led = rbData[8:0];
           match_led = b1;
