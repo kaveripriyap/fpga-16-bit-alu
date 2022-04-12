@@ -14,6 +14,7 @@ module game_CU ( // game control unit
     output alufn[6],
     output led[9],
     output match_led
+    output io_seg [8],
   ) {
   
   .clk(clk){
