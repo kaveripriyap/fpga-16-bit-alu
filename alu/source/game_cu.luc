@@ -35,6 +35,8 @@ module game_CU ( // game control unit
     CPMLE_SEQUENCECOUNT_16,
     CMPEQ_ISP1_0,
     INCREMENT_P1_SCORE,
+    INCREMENT_P1_SCORE_CMP,
+    INCREMENT_P2_SCORE_CMP,
     INCREMENT_P2_SCORE,
     INCREMENT_ROUND,
     CMPLEQC_ROUND_5,
@@ -170,11 +172,11 @@ module game_CU ( // game control unit
           
         game_fsm.UPDATE_LED_GREEN: // Led turns green if sequence is equal
           //  ADD STATEMENTS FOR LED
-          game_fsm.d = CPMLEQ_SEQUENCECOUNT_16;
+          game_fsm.d = game_fsm.CPMLE_SEQUENCECOUNT_16;
           
         game_fsm.UPDATE_LED_RED: //Led turns Red if sequence is wrong
           // ADD STATEMENTS FOR LED
-          game_fsm.d = game_fsm.GET_SEQ_STORE;
+          game_fsm.d = game_fsm.CMPEQ_ISP1_0;
 
           
         game_fsm.CPMLE_SEQUENCECOUNT_16: // to check if sequence count is less than 16 
@@ -235,6 +237,77 @@ module game_CU ( // game control unit
 
           
           game_fsm.d = game_fsm.INCREMENT_ROUND;
+
+
+        game_fsm.CMPEQ_ISP1_0:   //comparing isP1 0 
+          alufn = 6b110010; // COMPEQ
+          asel = b00;  //passing ra register
+          bsel=  b001; //passing SEXT(0)
+          ra = b0110 ; 
+         
+          rc = b1101; //store to temp register 1 
+          we =1;
+          if(rc.q == 1){
+            game_fsm.d = game_fsm.INCREMENT_P1_SCORE_CMP;
+          }
+          else {
+            game_fsm.d = game_fsm.INCREMENT_P2_SCORE_CMP;
+
+          }
+
+
+
+        game_ fsm.INCREMENT_P1_SCORE_CMP: //increments P1 score
+          alufn =  6b000000 //ADDC
+          asel = b00; //passes register ra 
+          bsel = b010; //SEXT(1)
+          ra= b0011 //p1score register
+                 
+          rc = b0011; //write to p1score register   
+          we = b1;
+
+          
+          game_fsm.d = game_fsm.INCREMENT_ROUND;
+
+
+        game_ fsm.INCREMENT_P2_SCORE_CMP: //increments P1 score
+          alufn =  6b000000 //ADDC
+          asel = b00; //passes register ra 
+          bsel = b010; //SEXT(1)
+          ra= b0100 ; //p2score register
+                 
+          rc = b0100; //write to p2score register   
+          we = 1;
+
+          
+          game_fsm.d = game_fsm.INCREMENT_ROUND;
+
+        game_fsm.INCREMENT_ROUND: //incrementing round
+          alufn = 6b000000 ; //ADDC
+          asel = b00 ; //register ra
+          bsel = b010 ; //SEXT(1)
+
+          ra= b0101 ;
+          rc= 0101; 
+
+          we=1
+          game_fsm.d = game_fsm.CMPLEQC_ROUND_5;
+
+
+      
+
+
+
+
+
+
+
+        
+
+
+
+
+
 
 
 
