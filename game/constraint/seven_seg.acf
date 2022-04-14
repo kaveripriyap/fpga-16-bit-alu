@@ -1,0 +1,12 @@
+// Format: pin <name>[x] <pin_number> {pulldown/pullup}
+
+pin seven_seg_p1_sel[0] C40;  //12
+pin seven_seg_p1_sel[1] C39;  //9
+pin seven_seg_p1_sel[2] C11;  //8
+pin seven_seg_p1_sel[3] C43;  //6
+
+pin seven_seg_p1_seg[0] C6;   //1
+pin seven_seg_p1_seg[1] C5;   //2
+
+pin seven_seg_p1_seg[2] C45;  //4
+pin seven_seg_p1_seg[3] C46;  //5

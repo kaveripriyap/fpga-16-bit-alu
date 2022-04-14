@@ -1,0 +1,111 @@
+// This is the main 16-Bit ALU module
+
+module alu16 (
+    input alufn[6],
+    input x[16],
+    input y[16],
+    input asel,
+    input bsel[2],
+    input wdsel[2],
+    output out[16],
+    output z,
+    output v,
+    output n,
+    output err
+  ) {
+
+  sig ra_data[16];
+  sig rb_data[16];
+  sig alu_out[16];
+
+  // Initialise modules
+  //adder16 addormul16 (.x(x), .y(y), .alufn(alufn[5:0]));
+  //boolean16 boolean16 (.x(x), .y(y), .alufn(alufn[5:0]));
+  //shifter16 shifter16 (.x(x), .y(y), .alufn(alufn[5:0]));
+  //comparator16 comparator16 (.x(x), .y(y), .alufn(alufn[5:0]));
+  
+  adder16 addormul16;
+  boolean16 boolean16;
+  shifter16 shifter16;
+  comparator16 comparator16;
+
+  always {
+    // The z, v, n outputs can only be non-zero when carrying out arithmetic operations (ADD, SUB, MUL, FLOORDIV or MODULO)
+    z = 0;
+    v = 0;
+    n = 0;
+
+    err = 0;
+    
+    if (asel == b1) {
+      ra_data = 16h0002;
+    }
+    else {
+      ra_data = x;
+    }
+    
+    if (bsel == b01) {
+      rb_data = 16h0001;
+    }
+    else if (bsel == b10) {
+      rb_data = 16h0005;
+    }
+    else if (bsel == b11) {
+      rb_data = 16h0009;
+    }
+    else {
+      rb_data = y;
+    }
+
+    addormul16.x = ra_data;
+    addormul16.y = rb_data;
+    addormul16.alufn = alufn;
+    
+    boolean16.x = ra_data;
+    boolean16.y = rb_data;
+    boolean16.alufn = alufn;
+    
+    comparator16.x = ra_data;
+    comparator16.y = rb_data;
+    comparator16.alufn = alufn;
+    
+    shifter16.x = ra_data;
+    shifter16.y = rb_data;
+    shifter16.alufn = alufn;
+
+    // Select output of ALU based on alufn
+    case (alufn[5:4]) {
+      b00:
+        alu_out = addormul16.s;
+        z = addormul16.z;
+        v = addormul16.v;
+        n = addormul16.n;
+        err = addormul16.err;
+
+      b01:
+        alu_out = boolean16.result;
+
+      b10:
+        alu_out = shifter16.result;
+
+      b11:
+        alu_out = comparator16.result;
+
+      default:
+        alu_out = 16b0;
+    }
+
+    if (wdsel == b01) {
+      out = 16h0001;
+    }
+    else if (wdsel == b10) {
+      out = 16h0003;  
+    }
+    else if (wdsel == b11) {
+      out = 16h0000;
+    }
+    else {
+      out = alu_out;
+    }
+  }
+}
