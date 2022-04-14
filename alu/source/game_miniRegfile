@@ -21,6 +21,9 @@ module game_miniRegfile (       // regfile has two read ports and one write port
       dff p2_score[5];
       dff round[8];
       dff is_p1[1];
+
+
+
     }
   }
   

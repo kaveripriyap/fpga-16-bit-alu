@@ -295,24 +295,6 @@ module game_CU ( // game control unit
           we=1
           game_fsm.d = game_fsm.CMPLEQC_ROUND_5;
 
-
-      
-
-
-
-
-
-
-
-        
-
-
-
-
-
-
-
-
 //---------------------------------------------------------------------------------------------------------------------------------------
 
         game_fsm.GET_RANDOM_PAT: // this state stores random pattern in the temporary register
