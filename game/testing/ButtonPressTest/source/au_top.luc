@@ -1,0 +1,95 @@
+module au_top (
+    input clk,                    // 100MHz clock
+    input rst_n,                  // reset button (active low)
+    output led [8],               // 8 user controllable LEDs
+    input usb_rx,                 // USB->Serial input
+    output usb_tx,                // USB->Serial output
+    input player_button1,     // IO Buttons for Player 1
+    input player_button2,     // IO Buttons for Player 2
+    input reset_button,           // Game Reset Button
+    output sequence_check_led_green, 
+    output sequence_check_led_red, 
+    output seven_seg_p1_sel [4],  // Common Cathode seven-segment display digit select for Player 1
+    output seven_seg_p1_score [7],  // Common Cathode seven-segment display segment LEDs for Player 1 (without decimal point)
+    output seven_seg_p2_sel [4],  // Common Cathode seven-segment display digit select for Player 2
+    output seven_seg_p2_score [7],   // Common Cathode seven-segment display segment LEDs for Player 2 (without decimal point)
+    output seven_seg_rounds_sel [4], 
+    output seven_seg_rounds [7],
+  ) {
+
+  sig rst;
+  var i;
+  var j;
+
+  sig button1;
+  sig button2;
+  sig gamereset;
+
+  .clk(clk) {
+    // The reset conditioner is used to synchronize the reset signal to the FPGA
+    // clock. This ensures the entire FPGA comes out of reset at the same time.
+    reset_conditioner reset_cond;
+
+    button_conditioner b1;
+    button_conditioner b2;
+
+    button_conditioner reset_game_signal;
+
+    .rst(rst) {
+      multi_seven_seg seg_display;
+    }
+  }
+
+  always {
+    reset_cond.in = ~rst_n; // input raw inverted reset signal
+    rst = reset_cond.out;   // conditioned reset
+
+    usb_tx = usb_rx;        // loop serial port
+    
+    led = 8h00;             // turn LEDs off
+
+    // By default, set all leds and 7-segments as 0
+    sequence_check_led_green = {h0};
+    sequence_check_led_red = {h0};
+    seven_seg_p1_sel = 0;
+    seven_seg_p1_score = 0;
+    seven_seg_p2_sel = 0;
+    seven_seg_p2_score = 0;
+    seven_seg_rounds_sel = 0;
+    seven_seg_rounds = 0;
+    seg_display.values = {5b0, 5b0};
+
+    b1.in = player_button1;
+    button1 = b1.out;
+    if (button1) {
+      sequence_check_led_green = button1;
+      seg_display.values = {5h8, 5h8}; 
+      seven_seg_rounds = ~seg_display.seg;
+      seven_seg_rounds_sel = ~seg_display.seg;
+    }
+
+    b2.in = player_button2;
+    button2 = b2.out;
+    if (button2) {
+      seg_display.values = {5h6, 5h9}; 
+      seven_seg_p1_score = ~seg_display.seg;
+      seven_seg_p1_sel = ~seg_display.sel;
+      seven_seg_p2_score = ~seg_display.seg;
+      seven_seg_p2_sel = ~seg_display.seg;
+    }
+
+    reset_game_signal.in = reset_button;
+    gamereset = reset_game_signal.out;
+    if (gamereset) { 
+      sequence_check_led_red = gamereset;
+    }
+
+      seg_display.values = {5h6, 5h9, 5h6, 5h9}; 
+      seven_seg_p1_seg = ~seg_display.seg;
+      seven_seg_p1_sel = ~seg_display.sel;
+      seven_seg_p2_seg = ~seg_display.seg;
+      seven_seg_p2_sel = ~seg_display.sel;
+
+    }
+  }
+}
