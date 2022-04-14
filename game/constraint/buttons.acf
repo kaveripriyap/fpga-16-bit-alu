@@ -1,4 +1,5 @@
 // Format: pin <name>[x] <pin_number> {pulldown/pullup}
 
-pin player1_button A24 pulldown;   
-pin player2_button B36 pulldown;   
+pin player1_button1 B8 pulldown;   
+pin player1_button2 B9 pulldown;   
+pin reset_button B46 pulldown;

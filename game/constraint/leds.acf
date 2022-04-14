@@ -1,3 +1,4 @@
 // Format: pin <name>[x] <pin_number> {pulldown/pullup}
 
-pin sequence_check_led C3;   // player1 left
+pin sequence_check_led_green A43;   // sequence is correct
+pin sequence_check_led_red A42; //sequence is wrong
