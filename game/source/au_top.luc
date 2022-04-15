@@ -72,6 +72,13 @@ module au_top (
    // r_button.in = reset_button;
    // p_r.in = r_button.out;
    // pr = p_r.out;
+
+    player1_powerup_button.in = player1_button_powerup;
+    p1powerup = player1_powerup_button.out;
+    if (p1powerup) {
+        finger_leds1 = h1;
+    }
+ 
    
     gameMachine.btn1 = p_button1.out;
     gameMachine.btn2 = p_button2.out;
