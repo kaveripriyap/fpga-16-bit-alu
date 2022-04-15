@@ -4,30 +4,23 @@ module au_top (
     output led [8],               // 8 user controllable LEDs
     input usb_rx,                 // USB->Serial input
     output usb_tx,                // USB->Serial output
-    input player1_button,     // IO Buttons for Player 1
-    input player2_button,     // IO Buttons for Player 2
-
+    input player1_button_powerup, // Player 1 Powerup Button
+    input player2_button_powerup, // Player 2 Powerup Button
     input reset_button,           // Game Reset Button
-    output seven_seg_p1_seg [7],
-    output seven_seg_p2_seg [7],
-    
-    output sequence_check_led_green, 
-    output sequence_check_led_red, 
-    output seven_seg_p1_sel [4],  // Common Cathode seven-segment display digit select for Player 1
-    output seven_seg_p1_score [7],  // Common Cathode seven-segment display segment LEDs for Player 1 (without decimal point)
-    output seven_seg_p2_sel [4],  // Common Cathode seven-segment display digit select for Player 2
-    output seven_seg_p2_score [7],   // Common Cathode seven-segment display segment LEDs for Player 2 (without decimal point)
-    output seven_seg_rounds_sel [4], 
-    output seven_seg_rounds [7] // Common Cathode seven-segment display segment LEDs for Player 2 (without decimal point)
-  ) 
-{
+    output finger_leds1,
+    output finger_leds2
+//    output seven_seg_p1_sel [2],  // Common Cathode seven-segment display digit select for Player 1
+//    output seven_seg_p1_seg [7],  // Common Cathode seven-segment display segment LEDs for Player 1 (without decimal point)
+//    output seven_seg_p2_sel [2],  // Common Cathode seven-segment display digit select for Player 2
+//    output seven_seg_p2_seg [7],   // Common Cathode seven-segment display segment LEDs for Player 2 (without decimal point)
+//    output seven_seg_rounds_sel [2],  // Common Cathode seven-segment display digit select for Player 2
+//    output seven_seg_rounds_seg [7]   // Common Cathode seven-segment display segment LEDs for Player 2 (without decimal point)
+  ) {
 
   sig rst;
-  var i;
-  var j;
 
-  sig p1tl;
-  sig p2tl;
+  sig p1powerup;
+  sig p2powerup;
   sig gamereset;
 
   .clk(clk) {
@@ -35,14 +28,13 @@ module au_top (
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
 
-    button_conditioner player1;
-    button_conditioner player2;
-    
+    button_conditioner player1_powerup_button;
+    button_conditioner player2_powerup_button;
 
     button_conditioner reset_game_signal;
 
     .rst(rst) {
-      multi_seven_seg seg_display;
+//      multi_seven_seg seg_display;
     }
   }
 
@@ -55,49 +47,38 @@ module au_top (
     led = 8h00;             // turn LEDs off
 
     // By default, set all finger_leds and 7-segments as 0
-    sequence_check_led_green = h0;
-    sequence_check_led_red = h0;
-    seven_seg_p1_sel = 0;
-    seven_seg_p1_score = 0;
-    seven_seg_p2_sel = 0;
-    seven_seg_p2_score = 0;
-    seven_seg_rounds_sel = 0;
-    seven_seg_rounds = 0;
-    seg_display.values = {5b0, 5b0};
-
-
-    player1.in = player1_button;
-    p1tl = player1.out;
-    if (p1tl) {
-      sequence_check_led_green = p1tl;
-      seg_display.values = {5h8, 5h8}; 
-      seven_seg_rounds = ~seg_display.seg;
-      seven_seg_rounds_sel = ~seg_display.seg;
+    finger_leds1 = h0;
+    finger_leds2 = h0;
+//    seven_seg_p1_sel = 0;
+//    seven_seg_p1_seg = 0;
+//    seven_seg_p2_sel = 0;
+//    seven_seg_p2_seg = 0;
+//    seg_display.values = {5b0, 5b0};
+    
+    player1_powerup_button.in = player1_button_powerup;
+    p1powerup = player1_powerup_button.out;
+    if (p1powerup) {
+        finger_leds1 = h1;
     }
-    
-    player2.in = player2_button;
-    p2tl = player2.out;
-    if (p2tl) {
-      seg_display.values = {5h6, 5h9}; 
-      seven_seg_p1_score = ~seg_display.seg;
-      seven_seg_p1_sel = ~seg_display.sel;
-      seven_seg_p2_score = ~seg_display.seg;
-      seven_seg_p2_sel = ~seg_display.seg;
-    
+ 
+    player2_powerup_button.in = player2_button_powerup;
+    p2powerup = player2_powerup_button.out;
+    if (p2powerup) {
+        finger_leds2 = h1;
     }
 
-   
     reset_game_signal.in = reset_button;
     gamereset = reset_game_signal.out;
     if (gamereset) {
-      sequence_check_led_red = gamereset;
+          finger_leds1 = h1;
         }
-      
-      seg_display.values = {5h6, 5h9}; 
-      seven_seg_p1_seg = ~seg_display.seg;
-      seven_seg_p1_sel = ~seg_display.sel;
-      seven_seg_p2_seg = ~seg_display.seg;
-      seven_seg_p2_sel = ~seg_display.sel;
-
+   
+//      seg_display.values = {5h8, 5h8}; // 8888
+//      seven_seg_p1_seg = ~seg_display.seg;
+//      seven_seg_p1_sel = ~seg_display.sel;
+//      seven_seg_p2_seg = ~seg_display.seg;
+//      seven_seg_p2_sel = ~seg_display.sel;
+//    seven_seg_rounds_seg = ~seg_display.sel;
+//      seven_seg_rounds_sel = ~seg_display.sel;
     }
   }

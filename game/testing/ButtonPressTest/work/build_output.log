@@ -1,7 +1,26 @@
 Warnings in file C:\Users\shubh\Documents\GitHub\fpga-16-bit-alu\game\testing\ButtonPressTest\source\au_top.luc:
     Line 27, Column 6 : "j" was never used
     Line 26, Column 6 : "i" was never used
-Errors in file C:\Users\shubh\Documents\GitHub\fpga-16-bit-alu\game\testing\ButtonPressTest\constraint\seven_seg.acf:
-    Line 38, Column 22 : This index is out of bounds
-    Line 11, Column 22 : This index is out of bounds
-    Line 24, Column 20 : This index is out of bounds
+java.lang.IndexOutOfBoundsException: Index 2 out of bounds for length 2
+	at java.base/jdk.internal.util.Preconditions.outOfBounds(Preconditions.java:64)
+	at java.base/jdk.internal.util.Preconditions.outOfBoundsCheckIndex(Preconditions.java:70)
+	at java.base/jdk.internal.util.Preconditions.checkIndex(Preconditions.java:266)
+	at java.base/java.util.Objects.checkIndex(Objects.java:359)
+	at java.base/java.util.ArrayList.get(ArrayList.java:427)
+	at com.alchitry.labs.parsers.tools.lucid.LucidDebugModifier$DebugWalker.exitModule(LucidDebugModifier.java:173)
+	at com.alchitry.labs.parsers.lucid.parser.LucidParser$ModuleContext.exitRule(LucidParser.java:369)
+	at com.alchitry.labs.tools.ParseTreeMultiWalker.exitRule(ParseTreeMultiWalker.java:49)
+	at com.alchitry.labs.tools.ParseTreeMultiWalker.walk(ParseTreeMultiWalker.java:31)
+	at com.alchitry.labs.tools.ParseTreeMultiWalker.walk(ParseTreeMultiWalker.java:29)
+	at com.alchitry.labs.tools.ParserCache.walk(ParserCache.java:127)
+	at com.alchitry.labs.parsers.tools.lucid.LucidDebugModifier.modifyForDebug(LucidDebugModifier.java:40)
+	at com.alchitry.labs.project.builders.ProjectBuilder.createDebugFiles(ProjectBuilder.java:416)
+	at com.alchitry.labs.project.builders.ProjectBuilder.build(ProjectBuilder.java:145)
+	at com.alchitry.labs.project.Project$build$1.invokeSuspend(Project.kt:1276)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:56)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:571)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:738)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:678)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:665)
+

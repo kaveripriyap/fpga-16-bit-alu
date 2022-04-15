@@ -1,4 +1,4 @@
 // Format: pin <name>[x] <pin_number> {pulldown/pullup}
 
-pin sequence_check_led_green A43;   // sequence is correct
-pin sequence_check_led_red A42; //sequence is wrong
+pin green_led C5; // green
+pin red_led C6; // red

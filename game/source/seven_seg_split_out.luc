@@ -17,11 +17,30 @@ module seven_seg_split_out (
     dig_tolight = 0;
     seg_display.values = {5b0,5b0,5b0,5b0};
     case (split_chosen) {
-      16h0000: seg_display.values = {5h0, 5h0, 5h0, 5h0}; // 0
-      16h0001: seg_display.values = {5h1, 5h0, 5h0, 5h0}; // 1
-      16h0002: seg_display.values = {5h2, 5h0, 5h0, 5h0}; // 2
-      16h0003: seg_display.values = {5h3, 5h0, 5h0, 5h0}; // 3
-      16h0004: seg_display.values = {5h4, 5h0, 5h0, 5h0}; // 4
+      4h0000: seg_display.values = {5h0, 5h0}; // 0
+      4h0001: seg_display.values = {5h1, 5h0}; // 1
+      4h0002: seg_display.values = {5h2, 5h0}; // 2
+      4h0003: seg_display.values = {5h3, 5h0}; // 3
+      4h0004: seg_display.values = {5h4, 5h0}; // 4
+      4h0005: seg_display.values = {5h5, 5h0}; //5
+      4h0006: seg_display.values = {5h6, 5h0}; //6
+      4h0007: seg_display.values = {5h7, 5h0}; //7
+      4h0008: seg_display.values = {5h8, 5h0}; //8
+      4h0009: seg_display.values = {5h9, 5h0}; //9
+      4h000A: seg_display.values = {5h1, 5h0}; //10
+      4h000B: seg_display.values = {5h1, 5h1}; //11
+      4h000C: seg_display.values = {5h1, 5h2}; //12
+      4h000D: seg_display.values = {5h1, 5h3}; //13
+      4h000E: seg_display.values = {5h1, 5h4}; //14
+      4h000F: seg_display.values = {5h1, 5h5}; //15
+      4h0010: seg_display.values = {5hD, 5h1}; //p1
+      4h0011: seg_display.values = {5hD, 5h2}; //p2
+      4h0012: seg_display.values = {5h14, 5h0}; //t
+
+    
+      
+
+
       default: seg_display.values = {5b11111,5b11111,5b11111,5b11111};
     }
     seg_tolight = ~seg_display.seg;

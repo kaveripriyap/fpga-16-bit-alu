@@ -1,0 +1,85 @@
+module au_top ( 
+  input clk,  // clock
+  input rst,  // reset
+    
+  input rbData[16],
+  output we,
+  output ra[4],
+  output rb[4],
+  output rc[4],
+  output asel[3],
+  output bsel[2],
+  output wdsel[2],
+  output alufn[6],
+  input player_button1,
+  input player_button2,
+  input reset_button,
+  output green_led,
+  output red_led,
+  output seven_seg_p1_seg[7],
+  output seven_seg_p1_sel[2],
+  output seven_seg_p2_seg[7],
+  output seven_seg_p2_sel[2],
+  output seven_seg_rounds_seg[7],
+  output seven_seg_rounds_sel[2],
+  ) {
+    
+  sig rst;                  // reset signal
+  sig pb1; 
+  sig pb2;
+  sig pr;
+  
+  .clk(clk) {
+    // The reset conditioner is used to synchronize the reset signal to the FPGA
+    // clock. This ensures the entire FPGA comes out of reset at the same time.
+    
+    button_conditioner p_button1;
+    button_conditioner p_button2;
+    button_conditioner r_button;
+
+    edge_detector p_bl (#RISE(1), #FALL(0));
+    edge_detector p_b2 (#RISE(1), #FALL(0));
+    edge_detector p_r (#RISE(1), #FALL(0));
+
+    .rst(rst){
+      game_miniBeta gameMachine;
+      game_miniRegfile register_file;
+    }
+    
+    reset_conditioner reset_cond;
+  }
+  
+  always {
+    reset_cond.in = ~rst_n; // input raw inverted reset signal
+    rst = reset_cond.out;   // conditioned reset
+    
+    usb_tx = usb_rx;        // loop serial port
+    
+    green_led = 8h00;             // turn LEDs off
+    red_led = 8h00;
+    
+    io_seg = 8hff;          // turn segments off
+    io_sel = 4hf;           // select no digits
+
+  //  p_button1.in = player_button1;
+  //  p_bl.in = p_button1.out;
+   // pb1 = p_bl.out;
+
+   // p_button2.in = player_button2;
+   // p_b2.in = p_button2.out;
+  //  pb2 = p_b2.out;
+
+   // r_button.in = reset_button;
+   // p_r.in = r_button.out;
+   // pr = p_r.out;
+   
+    gameMachine.btn1 = p_button1.out;
+    gameMachine.btn2 = p_button2.out;
+    gameMachine.btn_reset = r_button.out;
+    green_led = gameMachine.green_led;
+    red_led = gameMachine.red_led;
+
+
+   
+  }
+}

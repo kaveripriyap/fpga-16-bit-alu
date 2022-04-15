@@ -1,4 +1,4 @@
-module multi_seven_seg #(
+module multi_seven_seg_6_debug #(
     DIGITS = 2 : DIGITS > 0,
     DIV = 16 : DIV >= 0
   ) (
@@ -6,18 +6,18 @@ module multi_seven_seg #(
     input rst,                // reset
     input values [DIGITS][5], // values to show
     output seg [7],           // LED segments
-    output sel [DIGITS]       // Digit select
+    output sel [DIGITS], output debug__ [47]       // Digit select
   ) {
 
   // number of bits required to store DIGITS-1
   const DIGIT_BITS = $clog2(DIGITS);
 
   .clk(clk), .rst(rst) {
-    counter ctr (#DIV(DIV), #SIZE(DIGIT_BITS), #TOP(DIGITS-1)); 
+    counter_7_debug ctr (#DIV(DIV), #SIZE(DIGIT_BITS), #TOP(DIGITS-1)); 
   }
 
-  seven_seg seg_dec;                      // segment decoder
-  decoder digit_dec (#WIDTH(DIGIT_BITS)); // digit decoder
+  seven_seg_8_debug seg_dec;                      // segment decoder
+  decoder_9_debug digit_dec (#WIDTH(DIGIT_BITS)); // digit decoder
 
   always {
     seg_dec.char = values[ctr.value];     // select the value for the active digit
@@ -26,4 +26,5 @@ module multi_seven_seg #(
     digit_dec.in = ctr.value;             // decode active digit to one-hot
     sel = digit_dec.out;                  // output the active digit
   }
+always debug__ = c{$flatten(clk), $flatten(rst), $flatten(values), $flatten(ctr.value), $flatten(seg_dec.segs), $flatten(digit_dec.out), $flatten(ctr.debug__), $flatten(seg_dec.debug__), $flatten(digit_dec.debug__)};
 }

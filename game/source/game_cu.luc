@@ -1,7 +1,6 @@
 module game_CU ( // game control unit
     input clk,  // clock
     input rst,  // reset
-  //  input st,   // slow timer ignored for now but needs to be implemented
     
     input rbData[16],
     output we,
@@ -12,9 +11,13 @@ module game_CU ( // game control unit
     output bsel[2],
     output wdsel[2],
     output alufn[6],
-    output led[9],
-    output match_led
-    output io_seg [8],
+    input player_button1,
+    input player_button2,
+    input reset_button,
+    output green_led,
+    output red_led,
+    output split_yes, 
+    output split_choice[16]; 
   ) {
   
   .clk(clk){
@@ -46,16 +49,18 @@ module game_CU ( // game control unit
     CMPEQ_P1_SCORE_P2SCORE,
     P1_WINNER,
     P2_WINNER,
-    DRAW,
+    TIE,
     SET_ISP1_1,
     END
         
   };
-  }
+}
+
+  var i ;
   always {
   
     //initial values for all the components in the beta, it is changed according to the FSM
-    alufn = b111111; //CHANGE
+    alufn = b111111; // CHANGE
     asel = b000;
     bsel = b00;
     we = b0000;
@@ -63,8 +68,10 @@ module game_CU ( // game control unit
     rb = b0000;
     rc = b0000;
     wdsel = b0;
-    led = b000000000;
-    match_led = b0; 
+    green_led = b0 ;
+    red_led = b0; 
+    split_yes = 0;
+
    // timer.d = 0; //initial value input into the timer, can be changed later
    // if (rst){
       // default values assigned above are left as it is,
@@ -88,7 +95,7 @@ module game_CU ( // game control unit
           asel = b00; 
 
           ra = b0110; // isP1 register
-          rc = b1101; //store value in temp register 1
+          rc = b0111; //store value in temp register 1
 
           we=1;
 
@@ -101,12 +108,22 @@ module game_CU ( // game control unit
           
           
         game_fsm.PLAYER1_PRESS: //loops till player  1 presses button the number of times speciified in sequence count
-          //for loop to store p1_sequence
+         
+
+         
+          for( i=0; i< rc.q ; )
+            if button1 pressed
+              Px_sequence[i] = 0
+            if button2 pressed 
+              Px_sequence[i] = 1
+}
+
           game_fsm.d = game_fsm.INCREMENT_SEQUENCECOUNT;
 
             
         game_fsm.PLAYER2_PRESS: //  //loops till player  1 presses button the number of times speciified in sequence count
           //for loop to store p1_sequence
+          
           game_fsm.d = game_fsm.INCREMENT_SEQUENCECOUNT;
 
 
@@ -130,7 +147,7 @@ module game_CU ( // game control unit
           bsel = b010; // passes SEXT(1)
 
           ra= b0010; // sequence count register
-          rc= b1101 ; // temp register 1
+          rc= b0111 ; // temp register 1
           we = b1;
         
           
@@ -157,13 +174,16 @@ module game_CU ( // game control unit
                  
 
         game_fsm.CMPEQ_P1SEQUENCE_P2SEQUENCE: //  compares sequences of the two players to see if they are equal
+          //TODO : NEED TO SLICE 
+          //CHECK ISP1 and compare accordingly 
           alufn =  b110010 ; //COMPEQ
+
           asel = b00; //passes ra register
           bsel = b000; //passes rb register
 
           ra= b0000;
           rb = b0001; 
-          rc =  b1110; // store result in temp register 2
+          rc =  b1000; // store result in temp register 2
           we = 1;
 
           if(rc.q == 1)
@@ -174,12 +194,13 @@ module game_CU ( // game control unit
           
         game_fsm.UPDATE_LED_GREEN: // Led turns green if sequence is equal
           //  ADD STATEMENTS FOR LED
-          game_fsm.d = CPMLEQ_SEQUENCECOUNT_16;
+
+          green_led = b1;
           game_fsm.d = game_fsm.CPMLE_SEQUENCECOUNT_16;
           
         game_fsm.UPDATE_LED_RED: //Led turns Red if sequence is wrong
           // ADD STATEMENTS FOR LED
-          game_fsm.d = game_fsm.GET_SEQ_STORE;
+          red_led = b1;
           game_fsm.d = game_fsm.CMPEQ_ISP1_0;
 
           
@@ -189,7 +210,7 @@ module game_CU ( // game control unit
           bsel = b100; // passes SEXT(16)
           ra=  b0010; 
           
-          rc=  b1110; // store in temp register 2
+          rc=  b1000; // store in temp register 2
           we= 1;
           if (rc.q == b1){
             game_fsm.d = game_fsm.NOT_ISP1_CMP;
@@ -213,7 +234,9 @@ module game_CU ( // game control unit
           game_fsm.d = game_fsm.TURN_LED_OFF;          
             
 
-        game_fsm.TURN_LED_OFF: //  
+        game_fsm.TURN_LED_OFF:
+          green_led = b0; 
+          red_led = b0; 
           game_fsm.d = game_fsm.IDLE;
           
         
@@ -226,8 +249,26 @@ module game_CU ( // game control unit
           rc = b0011; //write to p1score register   
           we = b1;
 
-          
-          game_fsm.d = game_fsm.INCREMENT_P2_SCORE;
+          //split_choice = b0011; 
+          //split_yes = b1;
+
+          game_fsm.d = game_fsm.INCREMENT_P1_SCORE_SEG;
+
+
+        game_fsm.INCREMENT_P1_SCORE_SEG: 
+          alufn = b0011  //Just X 
+          asel = b00; //passes register ra 
+          ra = b0011 ; //p1 score register 
+          rc =   b1010 ; //literal register
+          we = 1;
+          split_yes = 1 ;
+
+          game_fsm.d = game_fsm.INCREMENT_P2_SCORE;   
+
+
+        
+
+
 
 
         game_ fsm.INCREMENT_P2_SCORE: //increments P1 score
@@ -238,9 +279,24 @@ module game_CU ( // game control unit
                  
           rc = b0100; //write to p2score register   
           we = 1;
+         // split_choice = b0100; 
+        //  split_yes= b1;
 
+            game_fsm.d = game_fsm.INCREMENT_P2_SCORE_SEG;
           
-          game_fsm.d = game_fsm.INCREMENT_ROUND;
+          ;
+
+
+        game_fsm.INCREMENT_P2_SCORE_SEG: 
+          alufn = b0011  //Just X 
+          asel = b00; //passes register ra 
+          ra = b0100 ; //p1 score register 
+          rc =   b1010 ; //literal register
+          we = 1;
+          split_yes = 1 ;
+
+          game_fsm.d = game_fsm.INCREMENT_ROUND;   
+
 
 
         game_fsm.CMPEQ_ISP1_0:   //comparing isP1 0 
@@ -249,7 +305,7 @@ module game_CU ( // game control unit
           bsel=  b001; //passing SEXT(0)
           ra = b0110 ; 
          
-          rc = b1101; //store to temp register 1 
+          rc = b0111; //store to temp register 1 
           we =1;
           if(rc.q == 1){
             game_fsm.d = game_fsm.INCREMENT_P1_SCORE_CMP;
@@ -265,13 +321,28 @@ module game_CU ( // game control unit
           alufn =  6b000000 //ADDC
           asel = b00; //passes register ra 
           bsel = b010; //SEXT(1)
-          ra= b0011 //p1score register
+          ra= b0011; //p1score register
                  
           rc = b0011; //write to p1score register   
           we = b1;
+       //   split_choice = b0011;
+
+         // split_yes = b1;
+          game_fsm.d = game_fsm.INCREMENT_P1_SCORE_CMP_SEG;
+
+
 
           
+        game_fsm.INCREMENT_P1_SCORE_CMP_SEG:  //display to 7 seg
+          alufn = b0011  //Just X 
+          asel = b00; //passes register ra 
+          ra = b0011 ; //p1 score register 
+          rc =   b1010 ; //literal register
+          we = 1;
+          split_yes = 1 ;
+
           game_fsm.d = game_fsm.INCREMENT_ROUND;
+
 
 
         game_ fsm.INCREMENT_P2_SCORE_CMP: //increments P1 score
@@ -282,8 +353,20 @@ module game_CU ( // game control unit
                  
           rc = b0100; //write to p2score register   
           we = 1;
-
+       //   split_choice = b0100; 
+          split_yes = b1;
           
+          game_fsm.d = game_fsm.INCREMENT_P2_SCORE_CMP_SEG;
+
+
+        game_fsm.INCREMENT_P2_SCORE_CMP_SEG: 
+          alufn = b0011  //Just X 
+          asel = b00; //passes register ra 
+          ra = b0100; //p2 score register 
+          rc =   b1010 ; //literal register
+          we = 1;
+          split_yes = 1 ;
+
           game_fsm.d = game_fsm.INCREMENT_ROUND;
 
         game_fsm.INCREMENT_ROUND: //incrementing round
@@ -292,10 +375,25 @@ module game_CU ( // game control unit
           bsel = b010 ; //SEXT(1)
 
           ra= b0101 ;
-          rc= 0101; 
+          rc= b0101; //round register
+       //   split_choice =  b0101; 
+         // split_yes = b1;
+          we=1;
+          game_fsm.d = game_fsm.INCREMENT_ROUND_SEG;
 
-          we=1
+
+          
+        game_fsm.INCREMENT_ROUND_SEG: 
+          alufn = b0011  //Just X 
+          asel = b00; //passes register ra 
+          ra = b0101; //round  register 
+          rc =   b1010 ; //literal register
+          we = 1;
+          split_yes = 1 ;
+
           game_fsm.d = game_fsm.CMPLEQC_ROUND_5;
+
+          
 
         game_fsm.CMPLEQC_ROUND_5:
             alufn = b110110; 
@@ -303,7 +401,7 @@ module game_CU ( // game control unit
             bsel =  b011;  //  passing SEXT(5)
             ra= b0101 ; // register that stores round
             
-            rc=  b1101; // stored in temp register 1
+            rc=  b0111; // stored in temp register 1
             we =  1; 
             if(rc.q == 1){ 
                 game_fsm.d = game_fsm.RESET_SEQUENCE_COUNT;
@@ -327,7 +425,8 @@ module game_CU ( // game control unit
 
 
         game_fsm.TURN_LED_OFF1:
-            //do something IDK WHAT
+            green_led = b0;
+            red_led = b0;
             game_fsm.d = game_fsm.SET_ISP1_1;
 
         game_fsm.SET_ISP1_1: 
@@ -348,7 +447,7 @@ module game_CU ( // game control unit
             bsel = b000; //passes rb register
             ra= b0011;  //p1 score
             rb = b0100;  //p2 score
-            rc = b1101; //stored in temp register 1
+            rc = b0111; //stored in temp register 1
 
             we = 1 ;             
             if(rc.q==1){
@@ -366,7 +465,7 @@ module game_CU ( // game control unit
             bsel = b000;  //pass rb register 
             ra =   b0011; // p1 score
             rb =  b0100; //p2 score 
-            rc =  b1110; //store in temp register 2
+            rc =  b1000; //store in temp register 2
             we = 1;
             if(rc.q==1){
                 game_fsm.d = game_fsm.TIE;
@@ -375,22 +474,51 @@ module game_CU ( // game control unit
 
             else {
                 game_fsm.d = game_fsm.P1_WINNER;
+
             }
 
 
         game_fsm.P1_WINNER: 
-            //display on 7seg
-            game_fsm.d= game_fsm.END; 
+          
+          alufn = b0011  //Just X 
+          asel = b00; //passes register ra 
+          ra = b0011 ; //p1score register 
+          rc =   b1010 ; //literal register
+          we = 1;
+          split_yes = 1 ;
+
+          
+
+          game_fsm.d= game_fsm.END; 
 
         game_fsm.P2_WINNER: 
-            //display on 7seg
-            game_fsm.d= game_fsm.END; 
+          alufn = b0011;  //Just X 
+          asel = b00; //passes register ra 
+          ra = b0100 ; //p1score register 
+          rc = b1010 ; //literal register
+          we = 1;
+          split_yes = 1 ;
 
-        game_fsm.P1_TIE: 
-            //display on 7seg
+          
+
+          game_fsm.d= game_fsm.END; 
+
+        game_fsm.TIE: 
+          alufn = b0100:;  //Just Y
+          bsel = b101;
+          rc = b1010 ; 
+          split_yes = 1; 
+          we = 1; 
+
+        
+
             game_fsm.d= game_fsm.END; 
 
         game_fsm.END: 
+            split_yes = b0;
+            green_led = b0;
+            red_led = b0;
+            
             game_fsm.d= game_fsm.START;
 
 

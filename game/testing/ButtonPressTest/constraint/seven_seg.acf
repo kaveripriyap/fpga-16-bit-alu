@@ -8,7 +8,7 @@ pin seven_seg_p1_score[3] A11;  //4
 pin seven_seg_p1_score[4] A42;  //5
 pin seven_seg_p1_score[5] A43;  //6
 pin seven_seg_p1_score[6] A9;  //9
-pin seven_seg_p1_score[7] A8; //10 one of these is a decimal point
+//pin seven_seg_p1_score[7] A8; //10 one of these is a decimal point
 
 pin seven_seg_p1_sel[0] C6;   //uknown
 pin seven_seg_p1_sel[1] C5;   //uknown
@@ -21,7 +21,7 @@ pin seven_seg_rounds[3] A17;  //4
 pin seven_seg_rounds[4] A36;  //5
 pin seven_seg_rounds[5] A37;  //6
 pin seven_seg_rounds[6] A15;  //9
-pin seven_seg_rounds[7] A14; // 10 one of these is a decimal point, we need to find out which one
+//pin seven_seg_rounds[7] A14; // 10 one of these is a decimal point, we need to find out which one
 
 pin seven_seg_rounds_sel[0] C6;   //uknown
 pin seven_seg_rounds_sel[1] C5;   //uknown
@@ -35,7 +35,7 @@ pin seven_seg_p2_score[3] A23;  //4
 pin seven_seg_p2_score[4] A30;  //5
 pin seven_seg_p2_score[5] A31;  //6
 pin seven_seg_p2_score[6] A21;  //9
-pin seven_seg_p2_score[7] A20;  //10
+//pin seven_seg_p2_score[7] A20;  //10
 
 pin seven_seg_p2_sel[0] C6;   //uknown
 pin seven_seg_p2_sel[1] C5;   //uknown
