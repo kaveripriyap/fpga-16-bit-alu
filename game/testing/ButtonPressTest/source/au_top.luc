@@ -14,8 +14,10 @@ module au_top (
     output seven_seg_p2_sel [4],  // Common Cathode seven-segment display digit select for Player 2
     output seven_seg_p2_score [7],   // Common Cathode seven-segment display segment LEDs for Player 2 (without decimal point)
     output seven_seg_rounds_sel [4], 
-    output seven_seg_rounds [7],
-  ) {
+    output seven_seg_rounds [7]
+  )
+
+ {
 
   sig rst;
   var i;
@@ -29,12 +31,12 @@ module au_top (
     // The reset conditioner is used to synchronize the reset signal to the FPGA
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
-
+    
     button_conditioner b1;
     button_conditioner b2;
-
+    
     button_conditioner reset_game_signal;
-
+    
     .rst(rst) {
       multi_seven_seg seg_display;
     }

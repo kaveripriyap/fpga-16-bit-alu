@@ -1,0 +1,33 @@
+Errors in file C:\Users\shubh\Documents\GitHub\fpga-16-bit-alu\game\testing\ButtonPressTest\source\au_top.luc:
+    Line 68, Column 37 : extraneous input ';' expecting {<EOF>, 'global', 'module'}
+    Line 7, Column 4 : "player_button1" was never used
+    Line 8, Column 4 : "player_button2" was never used
+    Line 9, Column 4 : "reset_button" was never used
+    Line 23, Column 6 : "i" was never used
+    Line 24, Column 6 : "j" was never used
+    Line 26, Column 2 : "button1" was never used
+    Line 27, Column 2 : "button2" was never used
+    Line 28, Column 2 : "gamereset" was never used
+    Line 35, Column 4 : The signal "in" was not assigned
+    Line 36, Column 4 : The signal "in" was not assigned
+    Line 38, Column 4 : The signal "in" was not assigned
+    Line 41, Column 6 : "seg_display" was never used
+    Line 54, Column 31 : When assigning two arrays, their dimensions must match
+    Line 55, Column 29 : When assigning two arrays, their dimensions must match
+    Line 64, Column 4 : extraneous input 'b1' expecting {'}', 'case', 'if', 'for', TYPE_ID, CONST_ID, SPACE_ID}
+    Line 64, Column 10 : mismatched input '=' expecting {';', '<', '>', '+', '-', 'x{', '*', '/', '>>', '<<', '<<<', '>>>', '|', '&', '^', '==', '!=', '>=', '<=', '||', '&&', '?'}
+    Line 64, Column 12 : The module "player_button1" could not be found
+    Line 64, Column 26 : extraneous input ';' expecting {TYPE_ID, CONST_ID, SPACE_ID}
+    Line 65, Column 12 : mismatched input '=' expecting {';', '<', '>', '+', '-', 'x{', '*', '/', '>>', '<<', '<<<', '>>>', '|', '&', '^', '==', '!=', '>=', '<=', '||', '&&', '?'}
+    Line 65, Column 20 : mismatched input ';' expecting {';', '<', '>', '+', '-', 'x{', '*', '/', '>>', '<<', '<<<', '>>>', '|', '&', '^', '==', '!=', '>=', '<=', '||', '&&', '?'}
+    Line 66, Column 8 : The module "button1" could not be found
+    Line 66, Column 15 : The name "){" is not a type name. It must start with a lowercase letter
+    Line 67, Column 6 : The module "sequence_check_led_green" could not be found
+    Line 67, Column 31 : extraneous input '=' expecting {TYPE_ID, CONST_ID, SPACE_ID}
+    Line 68, Column 6 : The module "seg_display" could not be found
+    Line 68, Column 17 : extraneous input '.' expecting {TYPE_ID, CONST_ID, SPACE_ID}
+    Line 68, Column 25 : mismatched input '=' expecting {';', '(', '['}
+Errors in file C:\Users\shubh\Documents\GitHub\fpga-16-bit-alu\game\testing\ButtonPressTest\constraint\seven_seg.acf:
+    Line 38, Column 22 : This index is out of bounds
+    Line 11, Column 22 : This index is out of bounds
+    Line 24, Column 20 : This index is out of bounds
