@@ -100,8 +100,8 @@ module game_cu ( // game control unit
   
     wdsel = b0;
     
-    green_led = b1;
-    red_led = b1;  
+    green_led = b0;
+    red_led = b0;  
     
     split_yes = 0;
     
