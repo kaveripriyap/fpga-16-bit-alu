@@ -78,18 +78,18 @@ module game_cu ( // game control unit
     P1_WINNER,
     P2_WINNER,
     TIE,
-    
+      
     SET_ISP1_1,
     END
         
   };
 }
 
-  var i[16];
+  //sig i[16];
   
   always {
   
-    //initial values for all the components in the beta, it is changed according to the FSM
+    // initial values for all the components in the beta, it is changed according to the FSM
     alufn = b111111; // CHANGE
     asel = b000;
     bsel = b00;
@@ -100,8 +100,8 @@ module game_cu ( // game control unit
   
     wdsel = b0;
     
-    green_led = b0;
-    red_led = b0;  
+    green_led = b1;
+    red_led = b1;  
     
     split_yes = 0;
     
@@ -275,8 +275,10 @@ module game_cu ( // game control unit
           
 
         game_fsm.CMP_SEQ_ISP1:
-          i = sequenceCount; 
-          if(p1_sequence[0:i-2]==p2_sequence){
+          //i = sequenceCount; 
+          //if(p1_sequence[0:i-2]==p2_sequence){
+          if(p1_sequence==p2_sequence){
+        
             game_fsm.d = game_fsm.UPDATE_LED_GREEN;
 
           }
@@ -286,8 +288,8 @@ module game_cu ( // game control unit
           }
 
         game_fsm.CMP_SEQ_NOTISP1:
-          i = sequenceCount; 
-          if(p2_sequence[0:i-2]==p1_sequence){
+          //if(p2_sequence[0:i-2]==p1_sequence){
+          if(p1_sequence==p2_sequence){
             game_fsm.d = game_fsm.UPDATE_LED_GREEN;
 
           }

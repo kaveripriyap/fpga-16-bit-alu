@@ -1,10 +1,10 @@
-module au_top ( 
+module au_top (
   input clk,  // clock
   input rst_n,  // reset
   input player_button1,
   input player_button2,
   input reset_button,
-  input usb_rx,                 // USB->Serial input
+  input usb_rx,
   output usb_tx,                // USB->Serial output
   output green_led,
   output red_led,
@@ -15,7 +15,7 @@ module au_top (
   output seven_seg_rounds_seg[7],
   output seven_seg_rounds_sel[2]
   ) {
-    
+  
   sig rst;                  // reset signal
   sig pb1; 
   sig pb2;
@@ -26,7 +26,7 @@ module au_top (
   sig split_choice[16];
   sig isp1[16];
   
-  .clk(clk) {
+    .clk(clk) {
     // The reset conditioner is used to synchronize the reset signal to the FPGA
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     
@@ -44,20 +44,43 @@ module au_top (
       seven_seg_split_out split_display;
       game_cu control_unit;
       game_miniRegfile register_file;
+      multi_seven_seg segp1;
+      multi_seven_seg segp2;
+      multi_seven_seg segrounds;
     }
    
   }
   
   alu16 game_alu;
-  
+
   always {
+  
     reset_cond.in = ~rst_n; // input raw inverted reset signal
     rst = reset_cond.out;   // conditioned reset
     
     usb_tx = usb_rx;        // loop serial port
     
-    green_led = 8h00;       // turn LEDs off
-    red_led = 8h00;
+    //green_led = 1b1;       // turn LEDs off
+    //red_led = 1b1;
+    
+    seven_seg_p1_sel = hf;
+    seven_seg_p1_seg = hf;
+    seven_seg_p2_sel = hf;
+    seven_seg_p2_seg = hf;
+    seven_seg_rounds_sel = hf;
+    seven_seg_rounds_seg = hf;
+    
+    segp1.values = {5h0, 5h0};
+    seven_seg_p1_seg= ~segp1.seg;
+    seven_seg_p1_sel= ~segp1.sel;
+    
+    segp2.values = {5h0, 5h0};
+    seven_seg_p2_seg= ~segp2.seg;
+    seven_seg_p2_sel= ~segp2.sel;
+    
+    segrounds.values = {5h0, 5h0};
+    seven_seg_rounds_seg= ~segrounds.seg;
+    seven_seg_rounds_sel= ~segrounds.sel;
    
     p_button1.in = player_button1;
     pb1 = p_button1.out;
@@ -67,31 +90,11 @@ module au_top (
 
     r_button.in = reset_button;
     pr = r_button.out;
-
-//    p_button1.in = player_button1;
-//    p_bl.in = p_button1.out;
-//    pb1 = p_bl.out;
-
-//    p_button2.in = player_button2;
-//    p_b2.in = p_button2.out;
-//    pb2 = p_b2.out;
-
-//    r_button.in = reset_button;
-//    p_r.in = r_button.out;
-//    pr = p_r.out;
     
-    // todo: reset button pressed from cu
-    
-    // Pass IO signals between CU, REGFILE & ALU
-
-    // CU
-   
     control_unit.btn1 = pb1;
     control_unit.btn2 = pb2;
     control_unit.btn_reset = pr;
     
-    // REGFILE
-
     register_file.ra = control_unit.ra;
     register_file.rb = control_unit.rb;
     register_file.rc = control_unit.rc;
@@ -100,7 +103,7 @@ module au_top (
     control_unit.sequenceCount = register_file.sequenceCount;
     control_unit.p1_sequence = register_file.p1Sequence;
     control_unit.p2_sequence = register_file.p2Sequence;
- 
+    
     
     // asel mux
     case(control_unit.asel){
@@ -138,12 +141,6 @@ module au_top (
           register_file.data = game_alu.out;
     }    
 
-    seven_seg_p1_sel = 0;
-    seven_seg_p1_seg = 0;
-    seven_seg_p2_sel = 0;
-    seven_seg_p2_seg = 0;
-    seven_seg_rounds_sel = 0;
-    seven_seg_rounds_seg = 0;
     
     split_boolean = control_unit.split_yes;
 
@@ -173,4 +170,31 @@ module au_top (
     red_led = control_unit.red_led;
 
   }
+    
+  /*
+    usb_tx=0;
+    green_led=0;
+    red_led=0;
+    seven_seg_p1_seg=7b0;
+    seven_seg_p1_sel=7b0;
+    seven_seg_p2_seg=7b0;
+    seven_seg_p2_sel=7b0;
+    seven_seg_rounds_seg=7b0;
+    seven_seg_rounds_sel=7b0;
+    test.x=16b0;
+    test.y=16b0;
+    test.alufn=6b0;
+    
+    a.isP1=0;
+    a.rst=0;
+    a.btn_reset=0;
+    a.p1_sequence=0;
+    a.p2_sequence=0;
+    a.tempvar1=0;
+    a.tempvar2=0;
+    a.clk=0;
+    a.sequenceCount=0;
+    a.btn1=0;
+    a.btn2=0;
+  }*/
 }
