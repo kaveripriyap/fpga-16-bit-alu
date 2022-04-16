@@ -1,4 +1,4 @@
-java.lang.NullPointerException
+java.lang.NullPointerException: Cannot invoke "com.alchitry.labs.parsers.lucid.SignalWidth.getWidths()" because the return value of "com.alchitry.labs.parsers.tools.lucid.BitWidthChecker.getWidth(org.antlr.v4.runtime.ParserRuleContext)" is null
 	at com.alchitry.labs.parsers.tools.lucid.toVerilog.LucidToVerilog.parseComplexWidth(LucidToVerilog.java:1654)
 	at com.alchitry.labs.parsers.tools.lucid.toVerilog.LucidToVerilog.exitSignal(LucidToVerilog.java:1879)
 	at com.alchitry.labs.parsers.lucid.parser.LucidParser$SignalContext.exitRule(LucidParser.java:3283)

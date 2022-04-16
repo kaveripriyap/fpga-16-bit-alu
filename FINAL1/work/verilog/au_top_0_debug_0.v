@@ -91,6 +91,7 @@ module au_top_0 (
   wire [1-1:0] M_control_unit_green_led;
   wire [1-1:0] M_control_unit_red_led;
   wire [1-1:0] M_control_unit_split_yes;
+  wire [16-1:0] M_control_unit_debug__;
   reg [1-1:0] M_control_unit_btn1;
   reg [1-1:0] M_control_unit_btn2;
   reg [1-1:0] M_control_unit_btn_reset;
@@ -100,7 +101,7 @@ module au_top_0 (
   reg [16-1:0] M_control_unit_isP1;
   reg [16-1:0] M_control_unit_tempvar1;
   reg [16-1:0] M_control_unit_tempvar2;
-  game_cu_4 control_unit (
+  game_cu_1_debug_4 control_unit (
     .clk(clk),
     .rst(rst),
     .btn1(M_control_unit_btn1),
@@ -122,7 +123,8 @@ module au_top_0 (
     .alufn(M_control_unit_alufn),
     .green_led(M_control_unit_green_led),
     .red_led(M_control_unit_red_led),
-    .split_yes(M_control_unit_split_yes)
+    .split_yes(M_control_unit_split_yes),
+    .debug__(M_control_unit_debug__)
   );
   wire [16-1:0] M_register_file_out_a;
   wire [16-1:0] M_register_file_out_b;
@@ -286,13 +288,13 @@ module au_top_0 (
     red_led = M_control_unit_red_led;
   end
   
-  reg [2-1:0] M_debugger_data;
+  reg [17-1:0] M_debugger_data;
   au_debugger_7 debugger (
     .clk(clk),
     .data(M_debugger_data)
   );
   
   always @* begin
-    M_debugger_data = {clk, player_button1};
+    M_debugger_data = {clk, M_control_unit_debug__};
   end
 endmodule

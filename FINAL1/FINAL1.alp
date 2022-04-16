@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="FINAL1" board="Alchitry Au" language="Lucid" version="3">
   <files>
-    <src>seven_seg_split_out.luc</src>
-    <src>write_to_add_value.luc</src>
-    <src>bool_16.luc</src>
-    <src>shift_16.luc</src>
+    <src>arith_16.luc</src>
     <src>multi_seven_seg.luc</src>
-    <src>game_miniRegfile.luc</src>
     <component>pipeline.luc</component>
+    <src>seven_seg.luc</src>
     <component>counter.luc</component>
-    <src>game_cu.luc</src>
+    <src top="true">au_top.luc</src>
+    <src>game_miniRegfile.luc</src>
     <src>alu16.luc</src>
     <component>decoder.luc</component>
-    <src top="true">au_top.luc</src>
-    <src>seven_seg.luc</src>
+    <src>bool_16.luc</src>
     <src>comp_16.luc</src>
+    <src>seven_seg_split_out.luc</src>
+    <src>write_to_add_value.luc</src>
     <component>reset_conditioner.luc</component>
+    <src>shift_16.luc</src>
     <component>edge_detector.luc</component>
-    <src>arith_16.luc</src>
+    <src>game_cu.luc</src>
     <component>button_conditioner.luc</component>
     <constraint>alchitry.acf</constraint>
     <constraint>io.acf</constraint>

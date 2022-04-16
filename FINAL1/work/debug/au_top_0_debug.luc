@@ -42,7 +42,7 @@ module au_top (
 
     .rst(rst){
       seven_seg_split_out split_display;
-      game_cu control_unit;
+      game_cu_1_debug control_unit;
       game_miniRegfile register_file;
     }
    
@@ -173,5 +173,5 @@ module au_top (
     red_led = control_unit.red_led;
 
   }
-au_debugger debugger (#NONCE(723419944), #DATA_WIDTH(2), #CAPTURE_DEPTH(256), .clk(clk));always debugger.data = c{$flatten(clk), $flatten(player_button1)};
+au_debugger debugger (#NONCE(4196387455), #DATA_WIDTH(17), #CAPTURE_DEPTH(256), .clk(clk));always debugger.data = c{$flatten(clk), $flatten(control_unit.debug__)};
 }
