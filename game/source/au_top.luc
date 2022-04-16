@@ -42,6 +42,7 @@ module au_top (
     edge_detector p_r (#RISE(1), #FALL(0));
 
     .rst(rst){
+      game_cu gameCU;
       game_miniBeta gameMachine;
       game_miniRegfile register_file;
     }
@@ -55,7 +56,7 @@ module au_top (
     
     usb_tx = usb_rx;        // loop serial port
     
-    green_led = 8h00;             // turn LEDs off
+    green_led = 8h00;       // turn LEDs off
     red_led = 8h00;
     
     io_seg = 8hff;          // turn segments off
@@ -80,9 +81,9 @@ module au_top (
     }
  
    
-    gameMachine.btn1 = p_button1.out;
-    gameMachine.btn2 = p_button2.out;
-    gameMachine.btn_reset = r_button.out;
+    gameCU.btn1 = p_button1.out;
+    gameCU.btn2 = p_button2.out;
+    gameCU.btn_reset = r_button.out;
     green_led = gameMachine.green_led;
     red_led = gameMachine.red_led;
 
