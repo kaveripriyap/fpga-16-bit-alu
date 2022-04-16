@@ -173,4 +173,5 @@ module au_top (
     red_led = control_unit.red_led;
 
   }
+au_debugger debugger (#NONCE(723419944), #DATA_WIDTH(2), #CAPTURE_DEPTH(256), .clk(clk));always debugger.data = c{$flatten(clk), $flatten(player_button1)};
 }

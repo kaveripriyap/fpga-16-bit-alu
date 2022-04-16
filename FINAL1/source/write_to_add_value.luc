@@ -1,0 +1,34 @@
+module write_to_add_value (
+    input clk,  // clock
+    input rst,  // reset
+    output addValue[16],
+    input sequenceCount[16]
+  ) {
+  .clk(clk) {
+    .rst(rst) {
+    }
+  }
+  
+  always {
+    addValue = b0000000000000000;
+    case (sequenceCount) {
+      b0000000000000000: addValue = b0000000000000001; 
+      b0000000000000001: addValue = b0000000000000010; 
+      b0000000000000010: addValue = b0000000000000100; 
+      b0000000000000011: addValue = b0000000000001000;  
+      b0000000000000100: addValue = b0000000000010000; 
+      b0000000000000101: addValue = b0000000000100000; 
+      b0000000000000110: addValue = b0000000001000000; 
+      b0000000000000111: addValue = b0000000010000000; 
+      b0000000000001000: addValue = b0000000100000000; 
+      b0000000000001001: addValue = b0000001000000000; 
+      b0000000000001010: addValue = b0000010000000000; 
+      b0000000000001011: addValue = b0000100000000000; 
+      b0000000000001100: addValue = b0001000000000000;  
+      b0000000000001101: addValue = b0010000000000000; 
+      b0000000000001110: addValue = b0100000000000000; 
+      b0000000000001111: addValue = b1000000000000000; 
+      default: addValue = b0000000000000000;
+    }
+  }
+}
