@@ -17,7 +17,7 @@ module seven_seg_split_out_3 (
   wire [7-1:0] M_seg_display_seg;
   wire [2-1:0] M_seg_display_sel;
   reg [10-1:0] M_seg_display_values;
-  multi_seven_seg_9 seg_display (
+  multi_seven_seg_8 seg_display (
     .clk(clk),
     .rst(rst),
     .values(M_seg_display_values),
