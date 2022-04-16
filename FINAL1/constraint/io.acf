@@ -1,6 +1,3 @@
-
-
-
 // Format: pin <name>[x] <pin_number> {pulldown/pullup}
 //selector for player 1
 pin seven_seg_p1_sel[0] C43;  //12
