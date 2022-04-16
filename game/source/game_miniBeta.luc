@@ -2,7 +2,8 @@ module game_miniBeta (
 
     input clk,  // clock
     input rst,  // reset
-    
+    input asel[4];
+   
     output green_led,
     output red_led,
     output seven_seg_p1_seg[7],
@@ -41,17 +42,19 @@ module game_miniBeta (
     
     // setup REGFILE unit 
     regfile.we = game_controlunit.we;
-    regfile.write_address = game_controlunit.rc;
-    regfile.read_address_a = game_controlunit.ra;
-    regfile.read_address_b = game_controlunit.rb;
+    regfile.rc = game_controlunit.rc;
+    regfile.ra = game_controlunit.ra;
+    regfile.rb = game_controlunit.rb;
     
-    game_controlunit.rbData = regfile.out_b;
+    game_controlunit.rbData = regfile.sequenceCount;
+    game_controlunit.p1_sequence = regfile.p1Sequence;
+    game_controlunit.p2_sequence = regfile.p2Seqeunce;
+ 
     
     // asel mux
     case(game_controlunit.asel){
       b00  : inputAlu_a = regfile.out_a;
-      b01  : inputAlu_a[2:0] = btn; 
-             inputAlu_a[15:3] = b0000000000000;
+      b01  : inputAlu_a = h0000;
       default : 
           inputAlu_a = h0000;
     }
@@ -95,7 +98,7 @@ module game_miniBeta (
     // output to the au_top
     green_led = game_controlunit.green_led;
     red_led = game_controlunit.red_led;
-    //TODO 7 SEG, llok for split 
+    
 
     split_boolean = control_unit.split_yes;
 
