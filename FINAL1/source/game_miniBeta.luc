@@ -1,0 +1,123 @@
+module game_miniBeta (
+
+    input clk,  // clock
+    input rst,  // reset
+    input asel[4];
+    output green_led,
+    output red_led,
+    output seven_seg_p1_seg[7],
+    output seven_seg_p1_sel[2],
+    output seven_seg_p2_seg[7],
+    output seven_seg_p2_sel[2],
+    output seven_seg_rounds_seg[7],
+    output seven_seg_rounds_sel[2]
+  ) 
+  {
+  
+  // temp variables for A and B values to be inputted in the ALU
+  sig inputAlu_a[16];
+  sig inputAlu_b[16];
+  
+  alu16 game_alu; // alu module of the game, our games uses boole, comparator, increment and decrement modules
+
+  .clk(clk){
+    .rst(rst){
+
+      //counter slow_timer(#SIZE(1),#DIV(20)); 
+
+      game_cu game_controlunit; // control unit module of the game
+      game_miniRegfile regfile; // regfile module of the game
+    }
+  }
+
+  //.clk(slow_timer.value){
+   // .rst(rst){
+     // game_cu game_controlunit; // control unit module of the game
+      //game_miniRegfile regfile; // regfile module of the game
+   // }
+  //}
+  
+  always {
+    
+    // setup REGFILE unit 
+    regfile.we = game_controlunit.we;
+    regfile.rc = game_controlunit.rc;
+    regfile.ra = game_controlunit.ra;
+    regfile.rb = game_controlunit.rb;
+    
+    game_controlunit.rbData = regfile.sequenceCount;
+    game_controlunit.p1_sequence = regfile.p1Sequence;
+    game_controlunit.p2_sequence = regfile.p2Seqeunce;
+ 
+    
+    // asel mux
+    case(game_controlunit.asel){
+      b00  : inputAlu_a = regfile.out_a;
+      b01  : inputAlu_a = h0000;
+      default : 
+          inputAlu_a = h0000;
+    }
+    
+    // bsel mux
+    case(game_controlunit.bsel){
+      b000 : inputAlu_b = regfile.out_b;
+      b001 : inputAlu_b = h0000;
+      b010 : inputAlu_b = h0001;
+      b011 : inputAlu_b = h0005;
+      b100 : inputAlu_b = h000F;
+      b101 : inputAlu_b = h0012; 
+      default: 
+          inputAlu_b = h0000;
+      
+    }
+    
+    // ALU
+    game_alu.x = inputAlu_a;
+    game_alu.y = inputAlu_b;
+    game_alu.alufn = game_controlunit.alufn;
+   
+    
+    // wdsel mux
+    case (game_controlunit.wdsel){
+      b00 : regfile.data = game_alu.out;
+      b01 : regfile.data = b1111111111111111;
+      b10 : regfile.data = b0000000000001111;
+      b11 : regfile.data = b0000000000000000;
+      default :
+          regfile.data = game_alu.out;
+    }
+    
+
+    seven_seg_p1_sel = 0;
+    seven_seg_p1_seg = 0;
+    seven_seg_p2_sel = 0;
+    seven_seg_p2_seg = 0;
+
+
+    // output to the au_top
+    green_led = game_controlunit.green_led;
+    red_led = game_controlunit.red_led;
+    
+
+    split_boolean = control_unit.split_yes;
+
+    split_choice = register_file.literal_out;
+    isp1 = register_file.isP1;
+
+    split_display.split_chosen = 16hffff;
+
+    // Give output to 7-segments
+    if (split_boolean) {
+      split_display.split_chosen = split_choice;
+      if (isp1 == 1) {
+        seven_seg_p1_seg = split_display.seg_tolight;
+        seven_seg_p1_sel = split_display.dig_tolight;
+      }
+      else if (isp1 == 0) {
+        seven_seg_p2_seg = split_display.seg_tolight;
+        seven_seg_p2_sel = split_display.dig_tolight;
+      }
+    }
+    
+  }
+}

@@ -1,0 +1,60 @@
+
+
+
+// Format: pin <name>[x] <pin_number> {pulldown/pullup}
+//selector for player 1
+pin seven_seg_p1_sel[0] C43;  //12
+pin seven_seg_p1_sel[1] C42;  //9
+
+//main pins for player 1
+pin seven_seg_p1_seg[0] A39;   //1
+pin seven_seg_p1_seg[1] A12;   //3
+pin seven_seg_p1_seg[2] A11;  //4
+pin seven_seg_p1_seg[3] A42;  //5
+pin seven_seg_p1_seg[4] A43;   //6
+pin seven_seg_p1_seg[5] A9;   //9
+pin seven_seg_p1_seg[6] A8;  //10
+
+
+//selector for player 2
+pin seven_seg_p2_sel[0] C8;  //12
+pin seven_seg_p2_sel[1] C9;  //9
+//main pins for player 2
+pin seven_seg_p2_seg[0] A30;   //1
+pin seven_seg_p2_seg[1] A24;   //3
+pin seven_seg_p2_seg[2] A28;  //4
+pin seven_seg_p2_seg[3] A27;  //5
+pin seven_seg_p2_seg[4] A31;   //6
+pin seven_seg_p2_seg[5] A21;   //9
+pin seven_seg_p2_seg[6] A20;  //10
+
+//selector for rounds
+pin seven_seg_rounds_sel[0] C46;  //12
+pin seven_seg_rounds_sel[1] C45;  //9
+
+//main pins for rounds
+pin seven_seg_rounds_seg[0] A33;   //1
+pin seven_seg_rounds_seg[1] A18;   //3
+pin seven_seg_rounds_seg[2] A17;  //4
+pin seven_seg_rounds_seg[3] A36;  //5
+pin seven_seg_rounds_seg[4] A37;   //6
+pin seven_seg_rounds_seg[5] A15;   //9
+pin seven_seg_rounds_seg[6] A14;  //10
+
+// Format: pin <name>[x] <pin_number> {pulldown/pullup}
+
+pin player_button1 B27  pulldown; // green
+pin player_button2 B28 pulldown;  // white
+
+pin reset_button B24 pulldown; // red
+
+// Format: pin <name>[x] <pin_number> {pulldown/pullup}
+
+pin green_led C5; // green
+pin red_led C6; // red
+
+
+
+
+
+
