@@ -1,2 +1,4 @@
 #ECHO
+
+
 Our game Echo builds upon the principles of a memory game. 2 players compete against each other to test their cognitive skills. The two players are provided with 2 buttons to choose from. The aim of the game is for the players to mimic the sequence of buttons pressed by the previous player and add 1 additional component to the progression. The player that doesn’t remember the sequence accurately loses the round. If both the players can echo each other's sequence up to length 16, a tie is called for the round and both players get a point.The game ends when atleast 1 player gets 4 points, declaring them the winner.
